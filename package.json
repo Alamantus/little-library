@@ -1,0 +1,9 @@
+{
+  "name": "little-library",
+  "version": "0.0.0",
+  "description": "A digital give-a-book, take-a-book library for ebooks",
+  "main": "index.js",
+  "repository": "https://github.com/Alamantus/little-library.git",
+  "author": "Robbie Antenesse <dev@alamantus.com>",
+  "license": "MIT"
+}
