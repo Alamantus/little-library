@@ -2,8 +2,14 @@
   "name": "little-library",
   "version": "0.0.0",
   "description": "A digital give-a-book, take-a-book library for ebooks",
-  "main": "index.js",
+  "main": "src/index.js",
   "repository": "https://github.com/Alamantus/little-library.git",
   "author": "Robbie Antenesse <dev@alamantus.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.16.4",
+    "helmet": "^3.15.0",
+    "socket.io": "^2.2.0",
+    "socket.io-client": "^2.2.0"
+  }
 }

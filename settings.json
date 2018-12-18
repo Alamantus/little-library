@@ -1,0 +1,7 @@
+{
+  "port": 3000,
+  "fileLocation": "./public/files/",
+  "historyLocation": "./public/history/",
+  "maxLibrarySize": 0,
+  "maxFileSize": 0
+}
