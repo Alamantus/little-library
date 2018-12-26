@@ -3,5 +3,6 @@
   "fileLocation": "./public/files/",
   "historyLocation": "./public/history/",
   "maxLibrarySize": 0,
-  "maxFileSize": 0
+  "maxFileSize": 0,
+  "allowedFormats": [".epub", ".mobi", ".pdf"]
 }

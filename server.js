@@ -4,6 +4,10 @@ const express = require('express');
 const http = require('http');
 const socketio = require('socket.io');
 const helmet = require('helmet');
+const bodyParser = require('body-parser');
+const fileUpload = require('express-fileupload');
+const filenamify = require('filenamify');
+const unusedFilename = require('unused-filename');
 
 const settings = require('./settings.json');
 
@@ -15,7 +19,20 @@ function Server () {
   this.fileLocation = path.resolve(settings.fileLocation);
   this.historyLocation = path.resolve(settings.historyLocation);
 
+  this.takenBooks = [];
+
   this.server.use(helmet());
+  
+  this.server.use(bodyParser.json()); // support json encoded bodies
+  this.server.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
+
+  this.server.use(fileUpload({  // support file uploads
+    abortOnLimit: true,
+    limits: {
+      fileSize: (settings.maxFileSize > 0 ? settings.maxFileSize * 1024 * 1024 : Infinity), // filesize in bytes (settings accepts MB)
+    },
+  }));
+
   this.server.use(express.static(path.join(__dirname, './public/')));
 
   this.server.get('/', (req, res) => {
@@ -23,17 +40,34 @@ function Server () {
     res.sendFile(page);
   });
 
+  this.server.post('/give', (req, res) => {
+    let success = false;
+
+    if (Object.keys(req.files).length > 0 && req.body.hasOwnProperty('title') && req.body.hasOwnProperty('summary')) {
+      const { book } = req.files;
+      const { title, author, summary } = req.body;
+      const fileType = book.name.substr(book.name.lastIndexOf('.'));
+      success = this.addBook({ book, title, author, summary, fileType });
+    }
+    
+    res.send(success);
+  });
+
   this.io.on('connection', socket => {
     this.broadcastVisitors();
 
     socket.on('take book', bookId => {
-      if (this.takeBook(bookId)) {
-        console.log('deleted ' + bookId);
+      const fileLocation = this.takeBook(bookId, socket.id);
+      if (fileLocation) {
+        console.log(socket.id + ' removed ' + bookId);
+        const downloadLocation = fileLocation.substr(fileLocation.lastIndexOf('/'));
+        socket.emit('./files' + downloadLocation);
       }
     });
 
     socket.on('disconnect', () => {
       this.broadcastVisitors();
+      this.deleteBooks(socket.id);
     });
   });
 }
@@ -49,7 +83,44 @@ Server.prototype.start = function () {
   });
 }
 
-Server.prototype.takeBook = function (bookId) {
+Server.prototype.addBook = function (uploadData = {}) {
+  const { book } = uploadData;
+  const bookId = this.uuid4();
+  const bookPath = path.resolve(this.fileLocation, bookId);
+
+  const bookData = {
+    title: uploadData.title,
+    author: uploadData.author,
+    summary: uploadData.summary,
+    fileType: book.name.substr(book.name.lastIndexOf('.')),
+  }
+
+  let success = false;
+  book.mv(unusedFilename.sync(path.resolve(bookPath, bookData.fileType)), function (err) {
+    if (!err) {
+      fs.writeFileSync(unusedFilename.sync(path.resolve(bookPath, '.json')), JSON.stringify(bookData));
+      success = true;
+    } else {
+      success = err;
+    }
+  });
+
+  return success;
+}
+
+Server.prototype.takeBook = function (bookId, socketId) {
+  return this.checkId(bookId, (bookPath, bookDataPath, bookData) => {
+    const bookName = filenamify(bookData.title);
+    const newFileName = unusedFilename.sync(path.resolve(this.fileLocation, bookName, bookData.fileType));
+    bookData.fileName = newFileName;
+    fs.renameSync(bookPath, newFileName);
+    fs.writeFileSync(bookDataPath, JSON.stringify(bookData));
+    takenBooks.push({ socketId, bookId });
+    return newFileName;
+  });
+}
+
+Server.prototype.checkId = function (bookId, callback = () => {}) {
   const bookDataPath = path.resolve(this.fileLocation, bookId, '.json');
   if (fs.existsSync(bookDataPath)) {
     const bookDataRaw = fs.readFileSync(bookDataPath);
@@ -57,15 +128,24 @@ Server.prototype.takeBook = function (bookId) {
       const bookData = JSON.parse(bookDataRaw);
       const bookPath = path.resolve(this.fileLocation, bookId, bookData.fileType);
       if (fs.existsSync(bookPath)) {
-        // Deleting right away won't work because we need download confirmation.
-        fs.unlinkSync(bookPath);
-        fs.renameSync(bookDataPath, path.resolve(this.historyLocation, bookId, '.json'));
-        return true;
+        return callback(bookPath, bookDataPath, bookData);
       }
     }
   }
 
   return false;
+}
+
+Server.prototype.deleteBooks = function (socketId) {
+  this.takenBooks.forEach(data => {
+    if (data.socketId === socketId) {
+      this.checkId(data.bookId, (bookPath, bookDataPath) => {
+        fs.unlinkSync(bookPath);
+        fs.renameSync(bookDataPath, path.resolve(this.historyLocation, data.bookId, '.json'));
+      });
+    }
+  });
+  this.takenBooks = this.takenBooks.filter(data => data.socketId === socketId);
 }
 
 Server.prototype.uuid4 = function () {
