@@ -1,1 +1,6 @@
 node_modules/
+public/files/*.epub
+public/files/*.mobi
+public/files/*.pdf
+public/files/*.json
+public/history/*.json
