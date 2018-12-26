@@ -33,21 +33,36 @@ function Server () {
     },
   }));
 
-  this.server.use(express.static(path.join(__dirname, './public/')));
+  this.server.use(express.static(path.join(__dirname, './public/files/')));
+  this.server.use(express.static(path.join(__dirname, './public/history/')));
+  this.server.use('/js', express.static(path.join(__dirname, './public/js/')));
+  this.server.use('/js', express.static(path.resolve('./node_modules/jquery/dist/')));
+  this.server.use('/js', express.static(path.resolve('./node_modules/socket.io-client/dist/')));
+  this.server.use('/css', express.static(path.resolve('./node_modules/bulma/css/')));
+  this.server.use('/css', express.static(path.join(__dirname, './public/css/')));
 
   this.server.get('/', (req, res) => {
-    const page = path.join(__dirname, './public/index.html');
-    res.sendFile(page);
+    const html = this.fillTemplate('./public/index.html');
+    if (html) {
+      res.send(html);
+    } else {
+      res.send('Something went wrong!');
+    }
   });
 
   this.server.post('/give', (req, res) => {
+    console.log(req.body);
+    console.log(req.files);
+
     let success = false;
 
     if (Object.keys(req.files).length > 0 && req.body.hasOwnProperty('title') && req.body.hasOwnProperty('summary')) {
       const { book } = req.files;
       const { title, author, summary } = req.body;
       const fileType = book.name.substr(book.name.lastIndexOf('.'));
-      success = this.addBook({ book, title, author, summary, fileType });
+      success = this.addBook({ book, title, author, summary, fileType }, () => {
+        res.send()
+      });
     }
     
     res.send(success);
@@ -70,6 +85,24 @@ function Server () {
       this.deleteBooks(socket.id);
     });
   });
+}
+
+Server.prototype.fillTemplate = function (file, templateVars = {}) {
+  const page = path.join(__dirname, file);
+  const data = fs.readFileSync(page, 'utf8');
+  if (data) {
+    let filledTemplate = data.replace(/\{\{allowedFormats\}\}/g, settings.allowedFormats.join(','))
+      .replace(/\{\{maxFileSize\}\}/g, (settings.maxFileSize > 0 ? settings.maxFileSize + 'MB' : 'no'));
+
+    for (let templateVar in templateVars) {
+      const regExp = new RegExp('\{\{' + templateVar + '\}\}', 'g')
+      filledTemplate = filledTemplate.replace(regexp, templateVars[templateVar]);
+    }
+
+    return filledTemplate;
+  }
+  
+  return data;
 }
 
 Server.prototype.broadcastVisitors = function () {
@@ -95,23 +128,24 @@ Server.prototype.addBook = function (uploadData = {}) {
     fileType: book.name.substr(book.name.lastIndexOf('.')),
   }
 
-  let success = false;
-  book.mv(unusedFilename.sync(path.resolve(bookPath, bookData.fileType)), function (err) {
-    if (!err) {
-      fs.writeFileSync(unusedFilename.sync(path.resolve(bookPath, '.json')), JSON.stringify(bookData));
-      success = true;
-    } else {
+  console.log('moving the book');
+  const bookFilePath = unusedFilename.sync(path.resolve(bookPath + bookData.fileType));
+  return book.mv(bookFilePath, function (err) {
+    if (err) {
       success = err;
+      console.log(err);
+    } else {
+      const bookDataPath = unusedFilename.sync(path.resolve(bookPath + '.json'));
+      fs.writeFileSync(bookDataPath, JSON.stringify(bookData));
+      console.log('uploaded ' + bookData.title + ' to ' + bookFilePath + ', and saved metadata to ' + bookDataPath);
     }
   });
-
-  return success;
 }
 
 Server.prototype.takeBook = function (bookId, socketId) {
   return this.checkId(bookId, (bookPath, bookDataPath, bookData) => {
     const bookName = filenamify(bookData.title);
-    const newFileName = unusedFilename.sync(path.resolve(this.fileLocation, bookName, bookData.fileType));
+    const newFileName = unusedFilename.sync(path.resolve(this.fileLocation, bookName + bookData.fileType));
     bookData.fileName = newFileName;
     fs.renameSync(bookPath, newFileName);
     fs.writeFileSync(bookDataPath, JSON.stringify(bookData));
@@ -121,12 +155,12 @@ Server.prototype.takeBook = function (bookId, socketId) {
 }
 
 Server.prototype.checkId = function (bookId, callback = () => {}) {
-  const bookDataPath = path.resolve(this.fileLocation, bookId, '.json');
+  const bookDataPath = path.resolve(this.fileLocation, bookId + '.json');
   if (fs.existsSync(bookDataPath)) {
     const bookDataRaw = fs.readFileSync(bookDataPath);
     if (bookDataRaw) {
       const bookData = JSON.parse(bookDataRaw);
-      const bookPath = path.resolve(this.fileLocation, bookId, bookData.fileType);
+      const bookPath = path.resolve(this.fileLocation, bookId + bookData.fileType);
       if (fs.existsSync(bookPath)) {
         return callback(bookPath, bookDataPath, bookData);
       }
@@ -141,7 +175,7 @@ Server.prototype.deleteBooks = function (socketId) {
     if (data.socketId === socketId) {
       this.checkId(data.bookId, (bookPath, bookDataPath) => {
         fs.unlinkSync(bookPath);
-        fs.renameSync(bookDataPath, path.resolve(this.historyLocation, data.bookId, '.json'));
+        fs.renameSync(bookDataPath, path.resolve(this.historyLocation, data.bookId + '.json'));
       });
     }
   });
@@ -155,3 +189,6 @@ Server.prototype.uuid4 = function () {
     return v.toString(16);
   });
 }
+
+const server = new Server();
+server.start();

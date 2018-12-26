@@ -2,16 +2,21 @@
   "name": "little-library",
   "version": "0.0.0",
   "description": "A digital give-a-book, take-a-book library for ebooks",
-  "main": "src/index.js",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
   "repository": "https://github.com/Alamantus/little-library.git",
   "author": "Robbie Antenesse <dev@alamantus.com>",
   "license": "MIT",
   "dependencies": {
     "body-parser": "^1.18.3",
+    "bulma": "^0.7.2",
     "express": "^4.16.4",
     "express-fileupload": "^1.0.0",
     "filenamify": "^2.1.0",
     "helmet": "^3.15.0",
+    "jquery": "^3.3.1",
     "slugify": "^1.3.4",
     "socket.io": "^2.2.0",
     "socket.io-client": "^2.2.0",
