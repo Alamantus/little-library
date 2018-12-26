@@ -1,47 +1,40 @@
-<!doctype html>
-
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <title>Little Library</title>
-  <meta name="description" content="The HTML5 Herald">
-
-  <link rel="stylesheet" href="./css/bulma.min.css?v=1.0">
-  <link rel="stylesheet" href="./css/styles.css?v=1.0">
-
-  <script src="./js/jquery.min.js"></script>
-  <script src="./js/socket.io.js"></script>
-</head>
-
-<body>
-  <form action="./give" method="post" enctype="multipart/form-data">
+<form action="./give" method="post" enctype="multipart/form-data">
+  <div class="field">
     <label class="label">Book Title:
       <input type="text" class="input" name="title" id="title">
     </label>
+  </div>
+  <div class="field">
     <label class="label">Book Author:
       <input type="text" class="input" name="author" id="author">
     </label>
+  </div>
+  <div class="field">
     <label class="label">Why you're sharing it:<br>
       <textarea class="textarea" name="summary" id="summary"></textarea>
     </label>
+  </div>
 
-    <div class="file is-boxed">
+  <div class="field">
+    <div class="file is-boxed has-name">
       <label class="file-label">
         <input class="file-input" type="file" name="book" id="book" accept="{{allowedFormats}}">
         <span class="file-cta">
           <span class="file-icon">
             <i class="fas fa-upload"></i>
           </span>
-          <span class="file-label">
-            Choose a Book File <code>{{allowedFormats}}</code> ({{maxFileSize}} maximum)
+          <span class="file-label has-text-centered">
+            Choose a Book File <code>{{allowedFormats}}</code> ({{maxFileSize}} maximum size)
           </span>
+        </span>
+        <span class="file-name has-text-centered" id="bookFileName">
+          None Selected
         </span>
       </label>
     </div>
+  </div>
+
+  <div class="field">
     <input class="button" type="submit" value="Give Book" name="submit">
-  </form>
-  <script src="./js/little-library.js"></script>
-</body>
-</html>
+  </div>
+</form>

@@ -42,7 +42,8 @@ function Server () {
   this.server.use('/css', express.static(path.join(__dirname, './public/css/')));
 
   this.server.get('/', (req, res) => {
-    const html = this.fillTemplate('./public/index.html');
+    const body = this.fillTemplate('./templates/pages/uploadForm.html');
+    const html = this.fillTemplate('./templates/htmlContainer.html', { body });
     if (html) {
       res.send(html);
     } else {
@@ -56,16 +57,57 @@ function Server () {
 
     let success = false;
 
-    if (Object.keys(req.files).length > 0 && req.body.hasOwnProperty('title') && req.body.hasOwnProperty('summary')) {
+    if (Object.keys(req.files).length > 0
+      && req.body.hasOwnProperty('title') && req.body.title.trim() !== ''
+      && req.body.hasOwnProperty('summary') && req.body.summary.trim() !== '') {
       const { book } = req.files;
       const { title, author, summary } = req.body;
       const fileType = book.name.substr(book.name.lastIndexOf('.'));
-      success = this.addBook({ book, title, author, summary, fileType }, () => {
-        res.send()
+      this.addBook({ book, title, author, summary, fileType }, () => {
+        const messageBox = this.fillTemplate('./templates/elements/messageBox.html', {
+          style: 'is-success',
+          header: 'Upload Successful',
+          message: 'Thank you for your contribution!'
+        });
+        const modal = this.fillTemplate('./templates/elements/modal.html', {
+          content: messageBox,
+        });
+        const body = this.fillTemplate('./templates/pages/uploadForm.html');
+        const html = this.fillTemplate('./templates/htmlContainer.html', { body, modal });
+        res.send(html);
+      }, (err) => {
+        const messageBox = this.fillTemplate('./templates/elements/messageBox.html', {
+          style: 'is-danger',
+          header: 'Upload Failed',
+          message: err,
+        });
+        const modal = this.fillTemplate('./templates/elements/modal.html', {
+          content: messageBox,
+        });
+        const body = this.fillTemplate('./templates/pages/uploadForm.html');
+        const html = this.fillTemplate('./templates/htmlContainer.html', { body, modal });
+        res.send(html);
       });
+    } else {
+      let errorMessage = '';
+      if (Object.keys(req.files).length <= 0) {
+        errorMessage += 'You have not selected a file.';
+      }
+      if (!req.body.hasOwnProperty('title') || req.body.title.trim() === '') {
+        errorMessage += (errorMessage.length > 0 ? '<br>' : '') + 'You have not written a title.';
+      }
+      if (!req.body.hasOwnProperty('summary') || req.body.summary.trim() === '') {
+        errorMessage += (errorMessage.length > 0 ? '<br>' : '') + 'You have not written a summary.';
+      }
+      const message = this.fillTemplate('./templates/elements/messageBox.html', {
+        style: 'is-danger',
+        header: 'Missing Required Fields',
+        message: errorMessage,
+      });
+      const body = this.fillTemplate('./templates/pages/uploadForm.html');
+      const html = this.fillTemplate('./templates/htmlContainer.html', { body, message });
+      res.send(html);
     }
-    
-    res.send(success);
   });
 
   this.io.on('connection', socket => {
@@ -96,8 +138,11 @@ Server.prototype.fillTemplate = function (file, templateVars = {}) {
 
     for (let templateVar in templateVars) {
       const regExp = new RegExp('\{\{' + templateVar + '\}\}', 'g')
-      filledTemplate = filledTemplate.replace(regexp, templateVars[templateVar]);
+      filledTemplate = filledTemplate.replace(regExp, templateVars[templateVar]);
     }
+
+    // If any template variable is not provided, don't even render them.
+    filledTemplate = filledTemplate.replace(/\{\{[a-zA-Z0-9\-_]+\}\}/g, '');
 
     return filledTemplate;
   }
@@ -116,27 +161,27 @@ Server.prototype.start = function () {
   });
 }
 
-Server.prototype.addBook = function (uploadData = {}) {
+Server.prototype.addBook = function (uploadData = {}, success = () => {}, error = () => {}) {
   const { book } = uploadData;
   const bookId = this.uuid4();
   const bookPath = path.resolve(this.fileLocation, bookId);
 
   const bookData = {
-    title: uploadData.title,
-    author: uploadData.author,
-    summary: uploadData.summary,
+    title: uploadData.title.trim(),
+    author: uploadData.author.trim(),
+    summary: uploadData.summary.trim(),
     fileType: book.name.substr(book.name.lastIndexOf('.')),
   }
 
-  console.log('moving the book');
   const bookFilePath = unusedFilename.sync(path.resolve(bookPath + bookData.fileType));
   return book.mv(bookFilePath, function (err) {
     if (err) {
-      success = err;
       console.log(err);
+      error(err);
     } else {
       const bookDataPath = unusedFilename.sync(path.resolve(bookPath + '.json'));
       fs.writeFileSync(bookDataPath, JSON.stringify(bookData));
+      success();
       console.log('uploaded ' + bookData.title + ' to ' + bookFilePath + ', and saved metadata to ' + bookDataPath);
     }
   });
