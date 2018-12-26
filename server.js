@@ -52,11 +52,6 @@ function Server () {
   });
 
   this.server.post('/give', (req, res) => {
-    console.log(req.body);
-    console.log(req.files);
-
-    let success = false;
-
     if (Object.keys(req.files).length > 0
       && req.body.hasOwnProperty('title') && req.body.title.trim() !== ''
       && req.body.hasOwnProperty('summary') && req.body.summary.trim() !== '') {

@@ -1,4 +1,6 @@
 $(document).ready(function() {
+  var socket = io();
+  
   $('.modal-background, .modal-close').click(function() {
     $(this).parent('.modal').removeClass('is-active');
   });
