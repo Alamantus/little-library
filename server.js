@@ -36,8 +36,8 @@ function Server () {
     },
   }));
 
-  this.server.use(express.static(path.join(__dirname, './public/files/')));
-  this.server.use(express.static(path.join(__dirname, './public/history/')));
+  this.server.use('/files', express.static(path.join(__dirname, './public/files/')));
+  this.server.use('/history', express.static(path.join(__dirname, './public/history/')));
   this.server.use('/js', express.static(path.join(__dirname, './public/js/')));
   this.server.use('/js', express.static(path.resolve('./node_modules/jquery/dist/')));
   this.server.use('/js', express.static(path.resolve('./node_modules/socket.io-client/dist/')));
@@ -122,7 +122,7 @@ function Server () {
       if (fileLocation) {
         console.log(socket.id + ' removed ' + bookId);
         const downloadLocation = fileLocation.substr(fileLocation.lastIndexOf('/'));
-        socket.emit('get book', './files' + downloadLocation);
+        socket.emit('get book', encodeURI('./files' + downloadLocation));
       }
     });
 
@@ -168,10 +168,25 @@ Server.prototype.generateHomePage = function () {
   const files = fs.readdirSync(this.fileLocation).filter(fileName => fileName.includes('.json'));
   const books = files.map(fileName => {
     const bookData = JSON.parse(fs.readFileSync(path.resolve(this.fileLocation, fileName), 'utf8'));
+    if (bookData.hasOwnProperty('fileName')) return '';
+
     const id = fileName.replace('.json', '');
     const header = '<h2 class="title">' + bookData.title + '</h2><h4 class="subtitle">' + bookData.author + '</h4>';
-    const content = '<div class="content"><h4>Contributed by ' + bookData.contributor + '</h4>' + snarkdown(bookData.summary) + '</div>';
-    const footer = '<a class="button close">Close</a> <a class="button is-success take-book">Take Book</a>';
+    const content = '<div class="content"><h4>Contributed by ' + bookData.contributor + '</h4>' + snarkdown(bookData.summary) + '</div>'
+      + this.fillTemplate('./templates/elements/modal.html', {
+        id: 'confirm_' + id,
+        content: this.fillTemplate('./templates/elements/messageBox.html', {
+          header: 'Download Your Book',
+          message: '<div class="content">'
+              + '<p class="has-text-weight-bold">Please ensure that you\'re using a device that can download and save the file correctly!</p>'
+            + '</div>'
+            + '<div class="notification is-danger">After you leave or refresh this page, it will no longer be accessible to anyone!</div>'
+            + '<div class="buttons">'
+              + '<a class="button close">Cancel</a> <a class="button is-info take-book" data-book="' + id + '">I understand, give me the link!</a>'
+            + '</div>',
+        }),
+      });
+    const footer = '<a class="button close">Close</a> <a class="button is-success modal-button" data-modal="confirm_' + id + '">Take Book</a>';
     const modal = this.fillTemplate('./templates/elements/modalCard.html', {
       id,
       header,
@@ -182,6 +197,7 @@ Server.prototype.generateHomePage = function () {
       id,
       title: bookData.title,
       author: bookData.author,
+      fileType: bookData.fileType,
       modal,
     });
   }).join('');
@@ -222,7 +238,7 @@ Server.prototype.addBook = function (uploadData = {}, success = () => {}, error 
       const bookDataPath = unusedFilename.sync(path.resolve(bookPath + '.json'));
       fs.writeFileSync(bookDataPath, JSON.stringify(bookData));
       success();
-      console.log('uploaded ' + bookData.title + ' to ' + bookFilePath + ', and saved metadata to ' + bookDataPath);
+      // console.log('uploaded ' + bookData.title + ' to ' + bookFilePath + ', and saved metadata to ' + bookDataPath);
     }
   });
 }
@@ -234,8 +250,8 @@ Server.prototype.takeBook = function (bookId, socketId) {
     bookData.fileName = newFileName;
     fs.renameSync(bookPath, newFileName);
     fs.writeFileSync(bookDataPath, JSON.stringify(bookData));
-    takenBooks.push({ socketId, bookId });
-    return newFileName;
+    this.takenBooks.push({ socketId, bookId });
+    return newFileName.replace(/\\/g, '/');
   });
 }
 
@@ -245,7 +261,7 @@ Server.prototype.checkId = function (bookId, callback = () => {}) {
     const bookDataRaw = fs.readFileSync(bookDataPath);
     if (bookDataRaw) {
       const bookData = JSON.parse(bookDataRaw);
-      const bookPath = path.resolve(this.fileLocation, bookId + bookData.fileType);
+      const bookPath = bookData.hasOwnProperty('fileName') ? bookData.fileName : path.resolve(this.fileLocation, bookId + bookData.fileType);
       if (fs.existsSync(bookPath)) {
         return callback(bookPath, bookDataPath, bookData);
       }
@@ -258,10 +274,13 @@ Server.prototype.checkId = function (bookId, callback = () => {}) {
 Server.prototype.deleteBooks = function (socketId) {
   this.takenBooks.forEach(data => {
     if (data.socketId === socketId) {
-      this.checkId(data.bookId, (bookPath, bookDataPath) => {
+      const check = this.checkId(data.bookId, (bookPath, bookDataPath) => {
         fs.unlinkSync(bookPath);
         fs.renameSync(bookDataPath, path.resolve(this.historyLocation, data.bookId + '.json'));
       });
+      if (check === false) {
+        console.log('couldn\'t find data.bookId');
+      }
     }
   });
   this.takenBooks = this.takenBooks.filter(data => data.socketId === socketId);
