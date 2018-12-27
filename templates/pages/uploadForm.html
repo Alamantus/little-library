@@ -1,18 +1,28 @@
 <form action="./give" method="post" enctype="multipart/form-data">
   <div class="field">
-    <label class="label">Book Title:
+    <label class="label" for="title">Book Title:</label>
+    <div class="control">
       <input type="text" class="input" name="title" id="title">
-    </label>
+    </div>
   </div>
   <div class="field">
-    <label class="label">Book Author:
+    <label class="label" for="author"><span class="is-italic has-text-weight-normal has-text-grey">(Optional)</span> Book Author:</label>
+    <div class="control">
       <input type="text" class="input" name="author" id="author">
-    </label>
+    </div>
   </div>
   <div class="field">
-    <label class="label">Why you're sharing it:<br>
+    <label class="label" for="summary">Why you're sharing it:</label>
+    <div class="control">
+      <div class="help">Markdown Enabled</div>
       <textarea class="textarea" name="summary" id="summary"></textarea>
-    </label>
+    </div>
+  </div>
+  <div class="field">
+    <label class="label" for="contributor"><span class="is-italic has-text-weight-normal has-text-grey">(Optional)</span> Your name:</label>
+    <div class="control">
+      <input type="text" class="input" name="contributor" id="contributor">
+    </div>
   </div>
 
   <div class="field">

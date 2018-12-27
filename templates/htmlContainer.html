@@ -6,7 +6,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>{{title}}Little Library</title>
+  <title>{{title}}{{titleSeparator}}{{siteTitle}}</title>
   <meta name="description" content="A digital give-a-book, take-a-book library for ebooks">
 
   <link rel="stylesheet" href="./css/bulma.min.css?v=1.0">
@@ -17,9 +17,57 @@
 </head>
 
 <body>
-  {{message}}
+  <nav class="navbar" role="navigation" aria-label="main navigation">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="/">
+        <h1 class="title">{{siteTitle}}</h1>
+      </a>
+  
+      <a role="button" class="navbar-burger burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </a>
+    </div>
+  
+    <div id="navbarBasicExample" class="navbar-menu">
+      <div class="navbar-start">
+        <a class="navbar-item" href="/">
+          View
+        </a>
 
-  {{body}}
+        <a class="navbar-item" href="/give">
+          Give
+        </a>
+      </div>
+  
+      <div class="navbar-end">
+        <a class="navbar-item" href="/about">
+          About
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="section">
+    <div class="container">
+
+      {{message}}
+
+      {{body}}
+
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="content has-text-centered">
+      <p>
+        <strong>Little Library</strong> by <a href="https://robbie.antenesse.net">Robbie Antenesse</a>. The source code is licensed
+        <a href="http://opensource.org/licenses/mit-license.php">MIT</a>. The website content
+        is licensed <a href="http://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY NC SA 4.0</a>.
+      </p>
+    </div>
+  </footer>
 
   {{modal}}
   <script src="./js/little-library.js"></script>

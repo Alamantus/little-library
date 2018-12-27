@@ -8,6 +8,7 @@ const bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
 const filenamify = require('filenamify');
 const unusedFilename = require('unused-filename');
+const snarkdown = require('snarkdown');
 
 const settings = require('./settings.json');
 
@@ -44,21 +45,7 @@ function Server () {
   this.server.use('/css', express.static(path.join(__dirname, './public/css/')));
 
   this.server.get('/', (req, res) => {
-    const files = fs.readdirSync(this.fileLocation).filter(fileName => fileName.includes('.json'));
-    const books = files.map(fileName => {
-      const bookData = JSON.parse(fs.readFileSync(path.resolve(this.fileLocation, fileName), 'utf8'));
-      const id = fileName.replace('.json', '');
-      const content = '<div class="box">' + bookData.summary + '</div>';
-      const modal = this.fillTemplate('./templates/elements/modal.html', { content, id });
-      return this.fillTemplate('./templates/elements/book.html', {
-        id,
-        title: bookData.title,
-        author: bookData.author,
-        modal,
-      })
-    }).join('');
-    const body = this.fillTemplate('./templates/pages/booksList.html', { books });
-    const html = this.fillTemplate('./templates/htmlContainer.html', { body });
+    const html = this.generateHomePage();
     if (html) {
       res.send(html);
     } else {
@@ -66,14 +53,19 @@ function Server () {
     }
   });
 
+  this.server.get('/give', (req, res) => {
+    const body = this.fillTemplate('./templates/pages/uploadForm.html');
+    const html = this.fillTemplate('./templates/htmlContainer.html', { title: 'Give a Book', body });
+    res.send(html);
+  });
   this.server.post('/give', (req, res) => {
     if (Object.keys(req.files).length > 0
       && req.body.hasOwnProperty('title') && req.body.title.trim() !== ''
       && req.body.hasOwnProperty('summary') && req.body.summary.trim() !== '') {
       const { book } = req.files;
-      const { title, author, summary } = req.body;
+      const { title, author, summary, contributor } = req.body;
       const fileType = book.name.substr(book.name.lastIndexOf('.'));
-      this.addBook({ book, title, author, summary, fileType }, () => {
+      this.addBook({ book, title, author, summary, contributor, fileType }, () => {
         const messageBox = this.fillTemplate('./templates/elements/messageBox.html', {
           style: 'is-success',
           header: 'Upload Successful',
@@ -84,7 +76,7 @@ function Server () {
           content: messageBox,
         });
         const body = this.fillTemplate('./templates/pages/uploadForm.html');
-        const html = this.fillTemplate('./templates/htmlContainer.html', { body, modal });
+        const html = this.fillTemplate('./templates/htmlContainer.html', { title: 'Give a Book', body, modal });
         res.send(html);
       }, (err) => {
         const messageBox = this.fillTemplate('./templates/elements/messageBox.html', {
@@ -97,7 +89,7 @@ function Server () {
           content: messageBox,
         });
         const body = this.fillTemplate('./templates/pages/uploadForm.html');
-        const html = this.fillTemplate('./templates/htmlContainer.html', { body, modal });
+        const html = this.fillTemplate('./templates/htmlContainer.html', { title: 'Give a Book', body, modal });
         res.send(html);
       });
     } else {
@@ -117,7 +109,7 @@ function Server () {
         message: errorMessage,
       });
       const body = this.fillTemplate('./templates/pages/uploadForm.html');
-      const html = this.fillTemplate('./templates/htmlContainer.html', { body, message });
+      const html = this.fillTemplate('./templates/htmlContainer.html', { title: 'Give a Book', body, message });
       res.send(html);
     }
   });
@@ -130,7 +122,7 @@ function Server () {
       if (fileLocation) {
         console.log(socket.id + ' removed ' + bookId);
         const downloadLocation = fileLocation.substr(fileLocation.lastIndexOf('/'));
-        socket.emit('./files' + downloadLocation);
+        socket.emit('get book', './files' + downloadLocation);
       }
     });
 
@@ -153,7 +145,9 @@ Server.prototype.fillTemplate = function (file, templateVars = {}) {
       this.templateCache[file] = data;
     }
 
-    let filledTemplate = data.replace(/\{\{allowedFormats\}\}/g, settings.allowedFormats.join(','))
+    let filledTemplate = data.replace(/\{\{siteTitle\}\}/g, settings.siteTitle)
+      .replace(/\{\{titleSeparator\}\}/g, settings.titleSeparator)
+      .replace(/\{\{allowedFormats\}\}/g, settings.allowedFormats.join(','))
       .replace(/\{\{maxFileSize\}\}/g, (settings.maxFileSize > 0 ? settings.maxFileSize + 'MB' : 'no'));
 
     for (let templateVar in templateVars) {
@@ -168,6 +162,31 @@ Server.prototype.fillTemplate = function (file, templateVars = {}) {
   }
   
   return data;
+}
+
+Server.prototype.generateHomePage = function () {
+  const files = fs.readdirSync(this.fileLocation).filter(fileName => fileName.includes('.json'));
+  const books = files.map(fileName => {
+    const bookData = JSON.parse(fs.readFileSync(path.resolve(this.fileLocation, fileName), 'utf8'));
+    const id = fileName.replace('.json', '');
+    const header = '<h2 class="title">' + bookData.title + '</h2><h4 class="subtitle">' + bookData.author + '</h4>';
+    const content = '<div class="content"><h4>Contributed by ' + bookData.contributor + '</h4>' + snarkdown(bookData.summary) + '</div>';
+    const footer = '<a class="button close">Close</a> <a class="button is-success take-book">Take Book</a>';
+    const modal = this.fillTemplate('./templates/elements/modalCard.html', {
+      id,
+      header,
+      content,
+      footer,
+    });
+    return this.fillTemplate('./templates/elements/book.html', {
+      id,
+      title: bookData.title,
+      author: bookData.author,
+      modal,
+    });
+  }).join('');
+  const body = this.fillTemplate('./templates/pages/booksList.html', { books });
+  return this.fillTemplate('./templates/htmlContainer.html', { title: 'View', body });
 }
 
 Server.prototype.broadcastVisitors = function () {
@@ -190,6 +209,7 @@ Server.prototype.addBook = function (uploadData = {}, success = () => {}, error 
     title: uploadData.title.trim(),
     author: uploadData.author.trim(),
     summary: uploadData.summary.trim(),
+    contributor: uploadData.contributor.trim(),
     fileType: book.name.substr(book.name.lastIndexOf('.')),
   }
 

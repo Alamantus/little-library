@@ -1,8 +1,13 @@
 $(document).ready(function() {
   var socket = io();
   
-  $('.modal-background, .modal-close').click(function() {
-    $(this).parent('.modal').removeClass('is-active');
+  $('.modal-background, .modal-close, .modal-card-head .delete, .modal-card-foot .close').click(function() {
+    $(this).closest('.modal').removeClass('is-active');
+  });
+
+  $('.modal-button').click(function() {
+    var modal = $(this).data('modal');
+    $('#' + modal).addClass('is-active');
   });
 
   $('#book').change(function() {
@@ -15,10 +20,5 @@ $(document).ready(function() {
       fileName = fileName.substr(lastIndexOfSlash + 1);
     }
     $('#bookFileName').text(fileName ? fileName : 'None Selected');
-  });
-
-  $('.book').click(function() {
-    var modal = $(this).data('modal');
-    $('#' + modal).addClass('is-active');
   });
 });
