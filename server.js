@@ -187,7 +187,7 @@ Server.prototype.fillTemplate = function (file, templateVars = {}) {
 
 Server.prototype.generateHomePage = function (req) {
   const files = fs.readdirSync(this.fileLocation).filter(fileName => fileName.includes('.json'));
-  const books = files.map(fileName => {
+  let books = files.map(fileName => {
     const bookData = JSON.parse(fs.readFileSync(path.resolve(this.fileLocation, fileName), 'utf8'));
     if (bookData.hasOwnProperty('fileName')) return '';
 
@@ -220,6 +220,11 @@ Server.prototype.generateHomePage = function (req) {
       modal,
     });
   }).join('');
+
+  if (books == '') {
+    books = '<div class="column"><div class="content">The shelf is empty. Would you like to <a href="/give">add a book</a>?</div></div>';
+  }
+
   const body = '<div class="columns is-multiline">' + books + '</div>';
   return this.fillTemplate('./templates/htmlContainer.html', {
     title: 'View',
@@ -230,7 +235,7 @@ Server.prototype.generateHomePage = function (req) {
 
 Server.prototype.generateHistoryPage = function (req) {
   const files = fs.readdirSync(this.historyLocation).filter(fileName => fileName.includes('.json'));
-  const history = files.map(fileName => {
+  let history = files.map(fileName => {
     const bookData = JSON.parse(fs.readFileSync(path.resolve(this.historyLocation, fileName), 'utf8'));
     const id = fileName.replace('.json', '');
     const added = fecha.format(new Date(bookData.added), 'hh:mm:ssA on dddd MMMM Do, YYYY');
@@ -256,6 +261,11 @@ Server.prototype.generateHistoryPage = function (req) {
       modal,
     });
   }).join('');
+
+  if (history == '') {
+    history = '<div class="column"><div class="content">No books have been taken yet. Would you like to <a href="/">take a book</a>?</div></div>';
+  }
+  
   const body = '<div class="columns is-multiline">' + history + '</div>';
   return this.fillTemplate('./templates/htmlContainer.html', {
     title: 'History',
