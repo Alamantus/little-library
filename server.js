@@ -9,6 +9,7 @@ const fileUpload = require('express-fileupload');
 const filenamify = require('filenamify');
 const unusedFilename = require('unused-filename');
 const snarkdown = require('snarkdown');
+const fecha = require('fecha');
 
 const settings = require('./settings.json');
 
@@ -37,12 +38,11 @@ function Server () {
   }));
 
   this.server.use('/files', express.static(path.join(__dirname, './public/files/')));
-  this.server.use('/history', express.static(path.join(__dirname, './public/history/')));
+  this.server.use('/css', express.static(path.resolve('./node_modules/bulma/css/')));
+  this.server.use('/css', express.static(path.join(__dirname, './public/css/')));
   this.server.use('/js', express.static(path.join(__dirname, './public/js/')));
   this.server.use('/js', express.static(path.resolve('./node_modules/jquery/dist/')));
   this.server.use('/js', express.static(path.resolve('./node_modules/socket.io-client/dist/')));
-  this.server.use('/css', express.static(path.resolve('./node_modules/bulma/css/')));
-  this.server.use('/css', express.static(path.join(__dirname, './public/css/')));
 
   this.server.get('/', (req, res) => {
     const html = this.generateHomePage();
@@ -114,6 +114,15 @@ function Server () {
     }
   });
 
+  this.server.get('/history', (req, res) => {
+    const html = this.generateHistoryPage();
+    if (html) {
+      res.send(html);
+    } else {
+      res.send('Something went wrong!');
+    }
+  });
+
   this.io.on('connection', socket => {
     this.broadcastVisitors();
 
@@ -171,27 +180,25 @@ Server.prototype.generateHomePage = function () {
     if (bookData.hasOwnProperty('fileName')) return '';
 
     const id = fileName.replace('.json', '');
-    const header = '<h2 class="title">' + bookData.title + '</h2><h4 class="subtitle">' + bookData.author + '</h4>';
-    const content = '<div class="content"><h4>Contributed by ' + bookData.contributor + '</h4>' + snarkdown(bookData.summary) + '</div>'
-      + this.fillTemplate('./templates/elements/modal.html', {
-        id: 'confirm_' + id,
-        content: this.fillTemplate('./templates/elements/messageBox.html', {
-          header: 'Download Your Book',
-          message: '<div class="content">'
-              + '<p class="has-text-weight-bold">Please ensure that you\'re using a device that can download and save the file correctly!</p>'
-            + '</div>'
-            + '<div class="notification is-danger">After you leave or refresh this page, it will no longer be accessible to anyone!</div>'
-            + '<div class="buttons">'
-              + '<a class="button close">Cancel</a> <a class="button is-info take-book" data-book="' + id + '">I understand, give me the link!</a>'
-            + '</div>',
-        }),
-      });
-    const footer = '<a class="button close">Close</a> <a class="button is-success modal-button" data-modal="confirm_' + id + '">Take Book</a>';
+    const confirmId = 'confirm_' + id;
+    const added = fecha.format(new Date(bookData.added), 'dddd MMMM Do, YYYY');
     const modal = this.fillTemplate('./templates/elements/modalCard.html', {
       id,
-      header,
-      content,
-      footer,
+      header: '<h2 class="title">' + bookData.title + '</h2><h4 class="subtitle">' + bookData.author + '</h4>',
+      content: this.fillTemplate('./templates/elements/bookInfo.html', {
+          contributor: bookData.contributor,
+          fileFormat: bookData.fileFormat,
+          added,
+          summary: snarkdown(bookData.summary),
+        })
+        + this.fillTemplate('./templates/elements/modal.html', {
+          id: confirmId,
+          content: this.fillTemplate('./templates/elements/messageBox.html', {
+            header: 'Download Your Book',
+            message: this.fillTemplate('./templates/elements/takeConfirm.html', { id }),
+          }),
+        }),
+      footer: '<a class="button close">Close</a> <a class="button is-success modal-button" data-modal="' + confirmId + '">Take Book</a>',
     });
     return this.fillTemplate('./templates/elements/book.html', {
       id,
@@ -201,8 +208,40 @@ Server.prototype.generateHomePage = function () {
       modal,
     });
   }).join('');
-  const body = this.fillTemplate('./templates/pages/booksList.html', { books });
+  const body = '<div class="columns is-multiline">' + books + '</div>';
   return this.fillTemplate('./templates/htmlContainer.html', { title: 'View', body });
+}
+
+Server.prototype.generateHistoryPage = function () {
+  const files = fs.readdirSync(this.historyLocation).filter(fileName => fileName.includes('.json'));
+  const history = files.map(fileName => {
+    const bookData = JSON.parse(fs.readFileSync(path.resolve(this.historyLocation, fileName), 'utf8'));
+    const id = fileName.replace('.json', '');
+    const added = fecha.format(new Date(bookData.added), 'dddd MMMM Do, YYYY');
+    const removed = fecha.format(new Date(parseInt(id)), 'dddd MMMM Do, YYYY');
+    const removedTag = '<div class="control"><div class="tags has-addons"><span class="tag">Taken</span><span class="tag is-primary">' + removed + '</span></div></div>';
+    const modal = this.fillTemplate('./templates/elements/modalCard.html', {
+      id,
+      header: '<h2 class="title">' + bookData.title + '</h2><h4 class="subtitle">' + bookData.author + '</h4>',
+      content: this.fillTemplate('./templates/elements/bookInfo.html', {
+        contributor: bookData.contributor,
+        fileFormat: bookData.fileType,
+        added,
+        removedTag,
+        summary: snarkdown(bookData.summary),
+      }),
+      footer: '<a class="button close">Close</a>',
+    });
+    return this.fillTemplate('./templates/elements/book.html', {
+      id,
+      title: bookData.title,
+      author: bookData.author,
+      fileType: bookData.fileType,
+      modal,
+    });
+  }).join('');
+  const body = '<div class="columns is-multiline">' + history + '</div>';
+  return this.fillTemplate('./templates/htmlContainer.html', { title: 'History', resourcePath: '../', body });
 }
 
 Server.prototype.broadcastVisitors = function () {
@@ -226,6 +265,7 @@ Server.prototype.addBook = function (uploadData = {}, success = () => {}, error 
     author: uploadData.author.trim(),
     summary: uploadData.summary.trim(),
     contributor: uploadData.contributor.trim(),
+    added: Date.now(),
     fileType: book.name.substr(book.name.lastIndexOf('.')),
   }
 
@@ -276,7 +316,7 @@ Server.prototype.deleteBooks = function (socketId) {
     if (data.socketId === socketId) {
       const check = this.checkId(data.bookId, (bookPath, bookDataPath) => {
         fs.unlinkSync(bookPath);
-        fs.renameSync(bookDataPath, path.resolve(this.historyLocation, data.bookId + '.json'));
+        fs.renameSync(bookDataPath, unusedFilename.sync(path.resolve(this.historyLocation, Date.now() + '.json')));
       });
       if (check === false) {
         console.log('couldn\'t find data.bookId');

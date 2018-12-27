@@ -9,11 +9,11 @@
   <title>{{title}}{{titleSeparator}}{{siteTitle}}</title>
   <meta name="description" content="A digital give-a-book, take-a-book library for ebooks">
 
-  <link rel="stylesheet" href="./css/bulma.min.css?v=1.0">
-  <link rel="stylesheet" href="./css/styles.css?v=1.0">
+  <link rel="stylesheet" href="{{resourcePath}}css/bulma.min.css?v=1.0">
+  <link rel="stylesheet" href="{{resourcePath}}css/styles.css?v=1.0">
 
-  <script src="./js/jquery.min.js"></script>
-  <script src="./js/socket.io.js"></script>
+  <script src="{{resourcePath}}js/jquery.min.js"></script>
+  <script src="{{resourcePath}}js/socket.io.js"></script>
 </head>
 
 <body>
@@ -38,6 +38,10 @@
 
         <a class="navbar-item" href="/give">
           Give
+        </a>
+
+        <a class="navbar-item" href="/history/">
+          History
         </a>
       </div>
   
@@ -70,7 +74,7 @@
   </footer>
 
   {{modal}}
-  <script src="./js/little-library.js"></script>
+  <script src="{{resourcePath}}js/little-library.js"></script>
 </body>
 
 </html>
