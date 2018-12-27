@@ -1,31 +1,5 @@
 <form action="{{resourcePath}}give" method="post" enctype="multipart/form-data">
   <div class="field">
-    <label class="label" for="title">Book Title:</label>
-    <div class="control">
-      <input type="text" class="input" name="title" id="title">
-    </div>
-  </div>
-  <div class="field">
-    <label class="label" for="author"><span class="is-italic has-text-weight-normal has-text-grey">(Optional)</span> Book Author:</label>
-    <div class="control">
-      <input type="text" class="input" name="author" id="author">
-    </div>
-  </div>
-  <div class="field">
-    <label class="label" for="summary">Why you're sharing it:</label>
-    <div class="control">
-      <div class="help">Markdown Enabled</div>
-      <textarea class="textarea" name="summary" id="summary"></textarea>
-    </div>
-  </div>
-  <div class="field">
-    <label class="label" for="contributor"><span class="is-italic has-text-weight-normal has-text-grey">(Optional)</span> Your name:</label>
-    <div class="control">
-      <input type="text" class="input" name="contributor" id="contributor">
-    </div>
-  </div>
-
-  <div class="field">
     <div class="file is-boxed has-name">
       <label class="file-label">
         <input class="file-input" type="file" name="book" id="book" accept="{{allowedFormats}}">
@@ -41,6 +15,32 @@
           None Selected
         </span>
       </label>
+    </div>
+  </div>
+
+  <div class="field">
+    <label class="label" for="title">Book Title:</label>
+    <div class="control">
+      <input type="text" class="input" name="title" id="title" value="{{title}}">
+    </div>
+  </div>
+  <div class="field">
+    <label class="label" for="author"><span class="is-italic has-text-weight-normal has-text-grey">(Optional)</span> Book Author:</label>
+    <div class="control">
+      <input type="text" class="input" name="author" id="author" value="{{author}}">
+    </div>
+  </div>
+  <div class="field">
+    <label class="label" for="summary">Why you're sharing it:</label>
+    <div class="control">
+      <div class="help">Markdown Enabled</div>
+      <textarea class="textarea" name="summary" id="summary">{{summary}}</textarea>
+    </div>
+  </div>
+  <div class="field">
+    <label class="label" for="contributor"><span class="is-italic has-text-weight-normal has-text-grey">(Optional)</span> Your name:</label>
+    <div class="control">
+      <input type="text" class="input" name="contributor" id="contributor" value="{{contributor}}">
     </div>
   </div>
 

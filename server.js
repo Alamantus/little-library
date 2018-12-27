@@ -32,7 +32,6 @@ function Server () {
   this.server.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
   this.server.use(fileUpload({  // support file uploads
-    abortOnLimit: true,
     limits: {
       fileSize: (settings.maxFileSize > 0 ? settings.maxFileSize * 1024 * 1024 : Infinity), // filesize in bytes (settings accepts MB)
     },
@@ -62,11 +61,11 @@ function Server () {
   });
   this.server.post('/give', (req, res) => {
     const resourcePath = (req.url.substr(-1) === '/' ? '../' : './');
+    const { title, author, summary, contributor } = req.body;
     if (Object.keys(req.files).length > 0
-      && req.body.hasOwnProperty('title') && req.body.title.trim() !== ''
-      && req.body.hasOwnProperty('summary') && req.body.summary.trim() !== '') {
+      && req.body.hasOwnProperty('title') && title.trim() !== ''
+      && req.body.hasOwnProperty('summary') && summary.trim() !== '') {
       const { book } = req.files;
-      const { title, author, summary, contributor } = req.body;
       const fileType = book.name.substr(book.name.lastIndexOf('.'));
       this.addBook({ book, title, author, summary, contributor, fileType }, () => {
         const messageBox = this.fillTemplate('./templates/elements/messageBox.html', {
@@ -78,7 +77,7 @@ function Server () {
           isActive: 'is-active',
           content: messageBox,
         });
-        const body = this.fillTemplate('./templates/pages/uploadForm.html');
+        const body = this.fillTemplate('./templates/pages/uploadForm.html', { resourcePath });
         const html = this.fillTemplate('./templates/htmlContainer.html', { title: 'Give a Book', resourcePath, body, modal });
         res.send(html);
       }, (err) => {
@@ -91,7 +90,7 @@ function Server () {
           isActive: 'is-active',
           content: messageBox,
         });
-        const body = this.fillTemplate('./templates/pages/uploadForm.html');
+        const body = this.fillTemplate('./templates/pages/uploadForm.html', { resourcePath, title, author, summary, contributor });
         const html = this.fillTemplate('./templates/htmlContainer.html', { title: 'Give a Book', resourcePath, body, modal });
         res.send(html);
       });
@@ -111,7 +110,7 @@ function Server () {
         header: 'Missing Required Fields',
         message: errorMessage,
       });
-      const body = this.fillTemplate('./templates/pages/uploadForm.html');
+      const body = this.fillTemplate('./templates/pages/uploadForm.html', { resourcePath, title, author, summary, contributor });
       const html = this.fillTemplate('./templates/htmlContainer.html', { title: 'Give a Book', resourcePath, body, message });
       res.send(html);
     }
@@ -278,6 +277,13 @@ Server.prototype.start = function () {
 
 Server.prototype.addBook = function (uploadData = {}, success = () => {}, error = () => {}) {
   const { book } = uploadData;
+
+  // If the file is too big, error out.
+  if (book.truncated === true) {
+    delete book;
+    return error('The file provided is too big');
+  }
+
   const bookId = this.uuid4();
   const bookPath = path.resolve(this.fileLocation, bookId);
 
