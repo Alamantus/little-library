@@ -8,6 +8,7 @@ const bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
 const filenamify = require('filenamify');
 const unusedFilename = require('unused-filename');
+const striptags = require('striptags');
 const snarkdown = require('snarkdown');
 const fecha = require('fecha');
 
@@ -45,7 +46,7 @@ function Server () {
   this.server.use('/js', express.static(path.resolve('./node_modules/socket.io-client/dist/')));
 
   this.server.get('/', (req, res) => {
-    const html = this.generateHomePage();
+    const html = this.generateHomePage(req);
     if (html) {
       res.send(html);
     } else {
@@ -54,11 +55,13 @@ function Server () {
   });
 
   this.server.get('/give', (req, res) => {
-    const body = this.fillTemplate('./templates/pages/uploadForm.html');
-    const html = this.fillTemplate('./templates/htmlContainer.html', { title: 'Give a Book', body });
+    const resourcePath = (req.url.substr(-1) === '/' ? '../' : './');
+    const body = this.fillTemplate('./templates/pages/uploadForm.html', { resourcePath });
+    const html = this.fillTemplate('./templates/htmlContainer.html', { title: 'Give a Book', resourcePath, body });
     res.send(html);
   });
   this.server.post('/give', (req, res) => {
+    const resourcePath = (req.url.substr(-1) === '/' ? '../' : './');
     if (Object.keys(req.files).length > 0
       && req.body.hasOwnProperty('title') && req.body.title.trim() !== ''
       && req.body.hasOwnProperty('summary') && req.body.summary.trim() !== '') {
@@ -76,7 +79,7 @@ function Server () {
           content: messageBox,
         });
         const body = this.fillTemplate('./templates/pages/uploadForm.html');
-        const html = this.fillTemplate('./templates/htmlContainer.html', { title: 'Give a Book', body, modal });
+        const html = this.fillTemplate('./templates/htmlContainer.html', { title: 'Give a Book', resourcePath, body, modal });
         res.send(html);
       }, (err) => {
         const messageBox = this.fillTemplate('./templates/elements/messageBox.html', {
@@ -89,7 +92,7 @@ function Server () {
           content: messageBox,
         });
         const body = this.fillTemplate('./templates/pages/uploadForm.html');
-        const html = this.fillTemplate('./templates/htmlContainer.html', { title: 'Give a Book', body, modal });
+        const html = this.fillTemplate('./templates/htmlContainer.html', { title: 'Give a Book', resourcePath, body, modal });
         res.send(html);
       });
     } else {
@@ -109,13 +112,23 @@ function Server () {
         message: errorMessage,
       });
       const body = this.fillTemplate('./templates/pages/uploadForm.html');
-      const html = this.fillTemplate('./templates/htmlContainer.html', { title: 'Give a Book', body, message });
+      const html = this.fillTemplate('./templates/htmlContainer.html', { title: 'Give a Book', resourcePath, body, message });
       res.send(html);
     }
   });
 
   this.server.get('/history', (req, res) => {
-    const html = this.generateHistoryPage();
+    const html = this.generateHistoryPage(req);
+    if (html) {
+      res.send(html);
+    } else {
+      res.send('Something went wrong!');
+    }
+  });
+
+  this.server.get('/about', (req, res) => {
+    const body = this.fillTemplate('./templates/pages/about.html');
+    const html = this.fillTemplate('./templates/htmlContainer.html', { title: 'About', body });
     if (html) {
       res.send(html);
     } else {
@@ -173,7 +186,7 @@ Server.prototype.fillTemplate = function (file, templateVars = {}) {
   return data;
 }
 
-Server.prototype.generateHomePage = function () {
+Server.prototype.generateHomePage = function (req) {
   const files = fs.readdirSync(this.fileLocation).filter(fileName => fileName.includes('.json'));
   const books = files.map(fileName => {
     const bookData = JSON.parse(fs.readFileSync(path.resolve(this.fileLocation, fileName), 'utf8'));
@@ -181,13 +194,13 @@ Server.prototype.generateHomePage = function () {
 
     const id = fileName.replace('.json', '');
     const confirmId = 'confirm_' + id;
-    const added = fecha.format(new Date(bookData.added), 'dddd MMMM Do, YYYY');
+    const added = fecha.format(new Date(bookData.added), 'hh:mm:ssA on dddd MMMM Do, YYYY');
     const modal = this.fillTemplate('./templates/elements/modalCard.html', {
       id,
       header: '<h2 class="title">' + bookData.title + '</h2><h4 class="subtitle">' + bookData.author + '</h4>',
       content: this.fillTemplate('./templates/elements/bookInfo.html', {
           contributor: bookData.contributor,
-          fileFormat: bookData.fileFormat,
+          fileFormat: bookData.fileType,
           added,
           summary: snarkdown(bookData.summary),
         })
@@ -209,16 +222,20 @@ Server.prototype.generateHomePage = function () {
     });
   }).join('');
   const body = '<div class="columns is-multiline">' + books + '</div>';
-  return this.fillTemplate('./templates/htmlContainer.html', { title: 'View', body });
+  return this.fillTemplate('./templates/htmlContainer.html', {
+    title: 'View',
+    resourcePath: (req.url.substr(-1) === '/' ? '../' : './'),
+    body
+  });
 }
 
-Server.prototype.generateHistoryPage = function () {
+Server.prototype.generateHistoryPage = function (req) {
   const files = fs.readdirSync(this.historyLocation).filter(fileName => fileName.includes('.json'));
   const history = files.map(fileName => {
     const bookData = JSON.parse(fs.readFileSync(path.resolve(this.historyLocation, fileName), 'utf8'));
     const id = fileName.replace('.json', '');
-    const added = fecha.format(new Date(bookData.added), 'dddd MMMM Do, YYYY');
-    const removed = fecha.format(new Date(parseInt(id)), 'dddd MMMM Do, YYYY');
+    const added = fecha.format(new Date(bookData.added), 'hh:mm:ssA on dddd MMMM Do, YYYY');
+    const removed = fecha.format(new Date(parseInt(id)), 'hh:mm:ssA on dddd MMMM Do, YYYY');
     const removedTag = '<div class="control"><div class="tags has-addons"><span class="tag">Taken</span><span class="tag is-primary">' + removed + '</span></div></div>';
     const modal = this.fillTemplate('./templates/elements/modalCard.html', {
       id,
@@ -241,7 +258,11 @@ Server.prototype.generateHistoryPage = function () {
     });
   }).join('');
   const body = '<div class="columns is-multiline">' + history + '</div>';
-  return this.fillTemplate('./templates/htmlContainer.html', { title: 'History', resourcePath: '../', body });
+  return this.fillTemplate('./templates/htmlContainer.html', {
+    title: 'History',
+    resourcePath: (req.url.substr(-1) === '/' ? '../' : './'),
+    body
+  });
 }
 
 Server.prototype.broadcastVisitors = function () {
@@ -261,10 +282,10 @@ Server.prototype.addBook = function (uploadData = {}, success = () => {}, error 
   const bookPath = path.resolve(this.fileLocation, bookId);
 
   const bookData = {
-    title: uploadData.title.trim(),
-    author: uploadData.author.trim(),
-    summary: uploadData.summary.trim(),
-    contributor: uploadData.contributor.trim(),
+    title: striptags(uploadData.title.trim()),
+    author: striptags(uploadData.author.trim()),
+    summary: striptags(uploadData.summary.trim().replace(/\r\n/g, '\n')),
+    contributor: striptags(uploadData.contributor.trim()),
     added: Date.now(),
     fileType: book.name.substr(book.name.lastIndexOf('.')),
   }
