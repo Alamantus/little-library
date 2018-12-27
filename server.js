@@ -19,6 +19,8 @@ function Server () {
   this.fileLocation = path.resolve(settings.fileLocation);
   this.historyLocation = path.resolve(settings.historyLocation);
 
+  this.templateCache = {};
+
   this.takenBooks = [];
 
   this.server.use(helmet());
@@ -42,7 +44,20 @@ function Server () {
   this.server.use('/css', express.static(path.join(__dirname, './public/css/')));
 
   this.server.get('/', (req, res) => {
-    const body = this.fillTemplate('./templates/pages/uploadForm.html');
+    const files = fs.readdirSync(this.fileLocation).filter(fileName => fileName.includes('.json'));
+    const books = files.map(fileName => {
+      const bookData = JSON.parse(fs.readFileSync(path.resolve(this.fileLocation, fileName), 'utf8'));
+      const id = fileName.replace('.json', '');
+      const content = '<div class="box">' + bookData.summary + '</div>';
+      const modal = this.fillTemplate('./templates/elements/modal.html', { content, id });
+      return this.fillTemplate('./templates/elements/book.html', {
+        id,
+        title: bookData.title,
+        author: bookData.author,
+        modal,
+      })
+    }).join('');
+    const body = this.fillTemplate('./templates/pages/booksList.html', { books });
     const html = this.fillTemplate('./templates/htmlContainer.html', { body });
     if (html) {
       res.send(html);
@@ -65,6 +80,7 @@ function Server () {
           message: 'Thank you for your contribution!'
         });
         const modal = this.fillTemplate('./templates/elements/modal.html', {
+          isActive: 'is-active',
           content: messageBox,
         });
         const body = this.fillTemplate('./templates/pages/uploadForm.html');
@@ -77,6 +93,7 @@ function Server () {
           message: err,
         });
         const modal = this.fillTemplate('./templates/elements/modal.html', {
+          isActive: 'is-active',
           content: messageBox,
         });
         const body = this.fillTemplate('./templates/pages/uploadForm.html');
@@ -125,9 +142,17 @@ function Server () {
 }
 
 Server.prototype.fillTemplate = function (file, templateVars = {}) {
-  const page = path.join(__dirname, file);
-  const data = fs.readFileSync(page, 'utf8');
+  let data;
+  if (this.templateCache.hasOwnProperty(file)) {
+    data = this.templateCache[file];
+  } else {
+    data = fs.readFileSync(path.join(__dirname, file), 'utf8');
+  }
   if (data) {
+    if (!this.templateCache.hasOwnProperty(file)) {
+      this.templateCache[file] = data;
+    }
+
     let filledTemplate = data.replace(/\{\{allowedFormats\}\}/g, settings.allowedFormats.join(','))
       .replace(/\{\{maxFileSize\}\}/g, (settings.maxFileSize > 0 ? settings.maxFileSize + 'MB' : 'no'));
 

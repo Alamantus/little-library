@@ -15,5 +15,10 @@ $(document).ready(function() {
       fileName = fileName.substr(lastIndexOfSlash + 1);
     }
     $('#bookFileName').text(fileName ? fileName : 'None Selected');
-  })
+  });
+
+  $('.book').click(function() {
+    var modal = $(this).data('modal');
+    $('#' + modal).addClass('is-active');
+  });
 });
