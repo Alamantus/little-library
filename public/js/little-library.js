@@ -8,6 +8,18 @@ $(document).ready(function() {
     $(downloadButton).replaceWith('<a download href="' + url + '" class="button is-success is-large">Download</a>');
   });
 
+  $('.navbar-burger').click(function() {
+    if ($(this).hasClass('is-active')) {
+      $(this).removeClass('is-active');
+      $(this).attr('aria-expanded', 'false');
+      $('.navbar-menu').removeClass('is-active');
+    } else {
+      $(this).addClass('is-active');
+      $(this).attr('aria-expanded', 'true');
+      $('.navbar-menu').addClass('is-active');
+    }
+  });
+
   $('.modal-background, .modal-close, .modal-card-head .delete, .modal .close').click(function() {
     $(this).closest('.modal').removeClass('is-active');
     downloadButton = undefined;
