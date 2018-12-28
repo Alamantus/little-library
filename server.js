@@ -225,7 +225,7 @@ Server.prototype.generateHomePage = function (req) {
     books = '<div class="column"><div class="content">The shelf is empty. Would you like to <a href="/give">add a book</a>?</div></div>';
   }
 
-  const body = '<div class="columns is-multiline">' + books + '</div>';
+  const body = '<h2 class="title">Available Books</h2><div class="columns is-multiline">' + books + '</div>';
   return this.fillTemplate('./templates/htmlContainer.html', {
     title: 'View',
     resourcePath: (req.url.substr(-1) === '/' ? '../' : './'),
@@ -266,7 +266,7 @@ Server.prototype.generateHistoryPage = function (req) {
     history = '<div class="column"><div class="content">No books have been taken yet. Would you like to <a href="/">take a book</a>?</div></div>';
   }
   
-  const body = '<div class="columns is-multiline">' + history + '</div>';
+  const body = '<h2 class="title">History</h2><div class="columns is-multiline">' + history + '</div>';
   return this.fillTemplate('./templates/htmlContainer.html', {
     title: 'History',
     resourcePath: (req.url.substr(-1) === '/' ? '../' : './'),
