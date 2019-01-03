@@ -194,6 +194,8 @@ Server.prototype.generateHomePage = function (req) {
   let books = files.map(fileName => {
     const bookData = JSON.parse(fs.readFileSync(path.resolve(this.fileLocation, fileName), 'utf8'));
     if (bookData.hasOwnProperty('fileName')) return '';
+    bookData.author = bookData.author ? bookData.author : '<em>author not provided</em>';
+    bookData.contributor = bookData.contributor ? bookData.contributor : 'Anonymous';
 
     const id = fileName.replace('.json', '');
     const confirmId = 'confirm_' + id;
@@ -241,6 +243,8 @@ Server.prototype.generateHistoryPage = function (req) {
   const files = fs.readdirSync(this.historyLocation).filter(fileName => fileName.includes('.json'));
   let history = files.map(fileName => {
     const bookData = JSON.parse(fs.readFileSync(path.resolve(this.historyLocation, fileName), 'utf8'));
+    bookData.author = bookData.author ? bookData.author : '<em>author not provided</em>';
+    bookData.contributor = bookData.contributor ? bookData.contributor : 'Anonymous';
     const id = fileName.replace('.json', '');
     const added = fecha.format(new Date(bookData.added), 'hh:mm:ssA on dddd MMMM Do, YYYY');
     const removed = fecha.format(new Date(parseInt(id)), 'hh:mm:ssA on dddd MMMM Do, YYYY');
