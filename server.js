@@ -24,6 +24,7 @@ function Server () {
 
   this.templateCache = {};
 
+  this.connections = 0;
   this.takenBooks = [];
 
   this.server.use(helmet());
@@ -136,7 +137,8 @@ function Server () {
   });
 
   this.io.on('connection', socket => {
-    this.broadcastVisitors();
+    this.connections++;
+    this.io.emit('update visitors', this.connections);
 
     socket.on('take book', bookId => {
       const fileLocation = this.takeBook(bookId, socket.id);
@@ -149,8 +151,8 @@ function Server () {
     });
 
     socket.on('disconnect', () => {
-      // console.log(socket.id + ' disconnected');
-      this.broadcastVisitors();
+      this.connections--;
+      this.io.emit('update visitors', this.connections);
       this.deleteBooks(socket.id);
     });
   });
@@ -274,11 +276,6 @@ Server.prototype.generateHistoryPage = function (req) {
     resourcePath: (req.url.substr(-1) === '/' ? '../' : './'),
     body
   });
-}
-
-Server.prototype.broadcastVisitors = function () {
-  const numberConnected = this.io.of('/').clients().connected.length;
-  this.io.emit('connected', numberConnected);
 }
 
 Server.prototype.start = function () {

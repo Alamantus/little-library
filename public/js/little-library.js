@@ -3,6 +3,10 @@ $(document).ready(function() {
 
   var downloadButton;
 
+  socket.on('update visitors', function(visitors) {
+    $('#visitors').text(visitors);
+  });
+  
   socket.on('get book', function(url) {
     $(downloadButton).replaceWith('<a download href="' + url + '" class="button is-success is-large">Download</a>');
   });
