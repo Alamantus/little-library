@@ -144,10 +144,12 @@ function Server () {
         console.log(socket.id + ' removed ' + bookId);
         const downloadLocation = fileLocation.substr(fileLocation.lastIndexOf('/'));
         socket.emit('get book', encodeURI('./files' + downloadLocation));
+        socket.broadcast.emit('remove book', bookId);
       }
     });
 
     socket.on('disconnect', () => {
+      // console.log(socket.id + ' disconnected');
       this.broadcastVisitors();
       this.deleteBooks(socket.id);
     });
@@ -240,7 +242,7 @@ Server.prototype.generateHistoryPage = function (req) {
     const id = fileName.replace('.json', '');
     const added = fecha.format(new Date(bookData.added), 'hh:mm:ssA on dddd MMMM Do, YYYY');
     const removed = fecha.format(new Date(parseInt(id)), 'hh:mm:ssA on dddd MMMM Do, YYYY');
-    const removedTag = '<div class="control"><div class="tags has-addons"><span class="tag">Taken</span><span class="tag is-primary">' + removed + '</span></div></div>';
+    const removedTag = '<div class="control"><div class="tags has-addons"><span class="tag">Taken</span><span class="tag is-warning">' + removed + '</span></div></div>';
     const modal = this.fillTemplate('./templates/elements/modalCard.html', {
       id,
       header: '<h2 class="title">' + bookData.title + '</h2><h4 class="subtitle">' + bookData.author + '</h4>',
@@ -353,6 +355,7 @@ Server.prototype.deleteBooks = function (socketId) {
     if (data.socketId === socketId) {
       const check = this.checkId(data.bookId, (bookPath, bookDataPath) => {
         fs.unlinkSync(bookPath);
+        // console.log('removed ' + bookPath);
         fs.renameSync(bookDataPath, unusedFilename.sync(path.resolve(this.historyLocation, Date.now() + '.json')));
       });
       if (check === false) {

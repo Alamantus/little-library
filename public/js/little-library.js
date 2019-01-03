@@ -4,8 +4,17 @@ $(document).ready(function() {
   var downloadButton;
 
   socket.on('get book', function(url) {
-    console.log(url);
     $(downloadButton).replaceWith('<a download href="' + url + '" class="button is-success is-large">Download</a>');
+  });
+
+  socket.on('remove book', function(bookId) {
+    var book = $('#book_' + bookId);
+    var modal = $('<div class="modal is-active"><div class="modal-background"></div><div class="modal-content"><button class="modal-close"></button><div class="notification is-danger"><h2 class="title">Sorry!</h2><p>Someone took the book you were looking at.</h2></div></div></div>');
+    modal.find('.modal-background, .modal-close').click(function() {
+      modal.remove();
+    });
+    book.after(modal);
+    book.remove();
   });
 
   $('.navbar-burger').click(function() {
@@ -32,6 +41,9 @@ $(document).ready(function() {
 
   $('.take-book').click(function() {
     var id = $(this).data('book');
+    $('#book_' + id).find('.box')
+      .removeClass('box').addClass(['notification', 'is-success'])
+      .attr('title', 'This can be downloaded until you leave this page');
     socket.emit('take book', id);
     downloadButton = this;
     $(this).addClass('is-loading');
