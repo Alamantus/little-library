@@ -57,7 +57,9 @@ function Server () {
 
   this.server.get('/give', (req, res) => {
     const resourcePath = (req.url.substr(-1) === '/' ? '../' : './');
-    const body = this.fillTemplate('./templates/pages/uploadForm.html', { resourcePath });
+    let body = this.fillTemplate('./templates/pages/uploadForm.html', { resourcePath });
+    body = this.replaceBodyWithTooManyBooksWarning(body);
+
     const html = this.fillTemplate('./templates/htmlContainer.html', { title: 'Give a Book', resourcePath, body });
     res.send(html);
   });
@@ -79,7 +81,8 @@ function Server () {
           isActive: 'is-active',
           content: messageBox,
         });
-        const body = this.fillTemplate('./templates/pages/uploadForm.html', { resourcePath });
+        let body = this.fillTemplate('./templates/pages/uploadForm.html', { resourcePath });
+        body = this.replaceBodyWithTooManyBooksWarning(body);
         const html = this.fillTemplate('./templates/htmlContainer.html', { title: 'Give a Book', resourcePath, body, modal });
         res.send(html);
       }, (err) => {
@@ -92,7 +95,8 @@ function Server () {
           isActive: 'is-active',
           content: messageBox,
         });
-        const body = this.fillTemplate('./templates/pages/uploadForm.html', { resourcePath, title, author, summary, contributor });
+        let body = this.fillTemplate('./templates/pages/uploadForm.html', { resourcePath, title, author, summary, contributor });
+        body = this.replaceBodyWithTooManyBooksWarning(body);
         const html = this.fillTemplate('./templates/htmlContainer.html', { title: 'Give a Book', resourcePath, body, modal });
         res.send(html);
       });
@@ -112,7 +116,8 @@ function Server () {
         header: 'Missing Required Fields',
         message: errorMessage,
       });
-      const body = this.fillTemplate('./templates/pages/uploadForm.html', { resourcePath, title, author, summary, contributor });
+      let body = this.fillTemplate('./templates/pages/uploadForm.html', { resourcePath, title, author, summary, contributor });
+      body = this.replaceBodyWithTooManyBooksWarning(body);
       const html = this.fillTemplate('./templates/htmlContainer.html', { title: 'Give a Book', resourcePath, body, message });
       res.send(html);
     }
@@ -291,8 +296,27 @@ Server.prototype.fillTemplate = function (file, templateVars = {}) {
   return data;
 }
 
+Server.prototype.replaceBodyWithTooManyBooksWarning = function (body) {
+  if (settings.maxLibrarySize > 0) {
+    const numberOfBooks = fs.readdirSync(this.fileLocation).filter(fileName => fileName.includes('.json')).length;
+    if (numberOfBooks >= settings.maxLibrarySize) {
+      body = this.fillTemplate('./templates/elements/messageBox.html', {
+        style: 'is-danger',
+        title: 'Library Full',
+        message: 'Sorry, the library has reached its maximum capacity for books! You will need to wait until a book is taken before a new one can be added.',
+      });
+    }
+  }
+
+  return body;
+}
+
 Server.prototype.generateHomePage = function (req) {
-  const files = fs.readdirSync(this.fileLocation).filter(fileName => fileName.includes('.json'));
+  const files = fs.readdirSync(this.fileLocation).filter(fileName => fileName.includes('.json'))
+    .map(fileName => {  // Cache the file data so sorting doesn't need to re-check each file
+      return { name: fileName, time: fs.statSync(path.resolve(this.fileLocation, fileName)).mtime.getTime() };
+    }).sort((a, b) => a.time - b.time).map(v => v.name);  // Sort from oldest to newest.
+
   let books = files.map(fileName => {
     const bookData = JSON.parse(fs.readFileSync(path.resolve(this.fileLocation, fileName), 'utf8'));
     if (bookData.hasOwnProperty('fileName')) return '';
@@ -342,7 +366,11 @@ Server.prototype.generateHomePage = function (req) {
 }
 
 Server.prototype.generateHistoryPage = function (req) {
-  const files = fs.readdirSync(this.historyLocation).filter(fileName => fileName.includes('.json'));
+  const files = fs.readdirSync(this.historyLocation).filter(fileName => fileName.includes('.json'))
+    .map(fileName => {  // Cache the file data so sorting doesn't need to re-check each file
+      return { name: fileName, time: fs.statSync(path.resolve(this.historyLocation, fileName)).mtime.getTime() };
+    }).sort((a, b) => b.time - a.time).map(v => v.name);  // Sort from newest to oldest.
+
   let history = files.map(fileName => {
     const bookData = JSON.parse(fs.readFileSync(path.resolve(this.historyLocation, fileName), 'utf8'));
     bookData.author = bookData.author ? bookData.author : '<em>author not provided</em>';
@@ -460,6 +488,7 @@ Server.prototype.deleteBooks = function (socketId) {
         fs.unlinkSync(bookPath);
         // console.log('removed ' + bookPath);
         fs.renameSync(bookDataPath, unusedFilename.sync(path.resolve(this.historyLocation, Date.now() + '.json')));
+        this.removeHistoryBeyondLimit();
       });
       if (check === false) {
         console.log('couldn\'t find data.bookId');
@@ -467,6 +496,27 @@ Server.prototype.deleteBooks = function (socketId) {
     }
   });
   this.takenBooks = this.takenBooks.filter(data => data.socketId === socketId);
+}
+
+Server.prototype.removeHistoryBeyondLimit = function () {
+  if (settings.maxHistory > 0) {
+    let files = fs.readdirSync(this.historyLocation).filter(fileName => fileName.includes('.json'))
+      .map(fileName => {  // Cache the file data so sorting doesn't need to re-check each file
+        return { name: fileName, time: fs.statSync(path.resolve(this.historyLocation, fileName)).mtime.getTime() };
+      }).sort((a, b) => b.time - a.time).map(v => v.name);  // Sort from newest to oldest.
+    if (files.length > settings.maxHistory) {
+      files.slice(settings.maxHistory).forEach(fileName => {
+        const filePath = path.resolve(this.historyLocation, fileName);
+        fs.unlink(filePath, err => {
+          if (err) {
+            console.error(err);
+          } else {
+            console.log('Deleted ' + filePath);
+          }
+        })
+      });
+    }
+  }
 }
 
 Server.prototype.uuid4 = function () {
