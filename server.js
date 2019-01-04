@@ -32,11 +32,12 @@ function Server () {
   this.server.use(bodyParser.json()); // support json encoded bodies
   this.server.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
-  this.server.use(fileUpload({  // support file uploads
+  this.server.use('/give', fileUpload({  // support file uploads
     limits: {
       fileSize: (settings.maxFileSize > 0 ? settings.maxFileSize * 1024 * 1024 : Infinity), // filesize in bytes (settings accepts MB)
     },
   }));
+  this.server.use('/backup', fileUpload()); // Allow file upload on backup with no limits.
 
   this.server.use('/files', express.static(path.join(__dirname, './public/files/')));
   this.server.use('/css', express.static(path.resolve('./node_modules/bulma/css/')));
@@ -133,6 +134,107 @@ function Server () {
       res.send(html);
     } else {
       res.send('Something went wrong!');
+    }
+  });
+
+  this.server.get('/backup', (req, res) => {
+    if (req.query.pass === settings.backupPassword) {
+      const templateValues = {};
+      let html = this.fillTemplate('./templates/pages/backup.html', templateValues);
+
+      if (req.query.dl && ['files', 'history'].includes(req.query.dl)) {
+        const onezip = require('onezip');
+        const { dl } = req.query;
+        const saveLocation = path.resolve(this.fileLocation, dl + 'Backup.zip');
+        const backupLocation = dl === 'history' ? this.historyLocation : this.fileLocation;
+        const files = fs.readdirSync(backupLocation).filter(fileName => !fileName.includes('.zip'));
+        onezip.pack(backupLocation, saveLocation, files)
+          .on('start', () => {
+            console.info('Starting a backup zip of ' + dl)
+          })
+          .on('error', (error) => {
+            console.error(error);
+            templateValues[dl + 'Download'] = 'Something went wrong: ' + JSON.stringify(error);
+            html = this.fillTemplate('./templates/pages/backup.html', templateValues);
+            res.send(html);
+          })
+          .on('end', () => {
+            console.log('Backup complete. Saved to ' + saveLocation);
+            let backupLocation = saveLocation.replace(/\\/g, '/');
+            backupLocation = backupLocation.substr(backupLocation.lastIndexOf('/'));
+            templateValues[dl + 'Download'] = '<a download href="' + encodeURI('./files' + backupLocation) + '">Download</a> (This will be removed from the server in 1 hour)';
+            html = this.fillTemplate('./templates/pages/backup.html', templateValues);
+            res.send(html);
+            console.log('Will delete ' + saveLocation + ' in 1 hour');
+            setTimeout(() => {
+              fs.unlink(saveLocation, (err) => {
+                if (err) {
+                  console.error(err);
+                } else {
+                  console.log('Deleted backup file ' + saveLocation);
+                }
+              })
+            }, 60 * 60 * 1000);
+          });
+      } else {
+        res.send(html);
+      }
+    } else {
+      res.status(400).send();
+    }
+  });
+  this.server.post('/backup', (req, res) => {
+    if (req.query.pass === settings.backupPassword) {
+      const templateValues = {};
+      let html = this.fillTemplate('./templates/pages/backup.html', templateValues);
+
+      const { files } = req;
+      if (Object.keys(files).length > 0) {
+        const backupType = Object.keys(files)[0];
+        if (['files', 'history'].includes(backupType)) {
+          const onezip = require('onezip');
+          const uploadPath = path.resolve('./', backupType + 'UploadedBackup.zip');
+          files[backupType].mv(uploadPath, (err) => {
+            if (err) {
+              console.error(error);
+              templateValues[backupType + 'UploadSuccess'] = 'Could not upload the file.';
+              html = this.fillTemplate('./templates/pages/backup.html', templateValues);
+              res.send(html);
+            } else {
+              onezip.extract(uploadPath, path.resolve('./public', backupType))
+                .on('start', () => {
+                  console.info('Extracting file ' + uploadPath)
+                })
+                .on('error', (error) => {
+                  console.error(error);
+                  templateValues[backupType + 'UploadSuccess'] = 'Something went wrong: ' + JSON.stringify(error);
+                  html = this.fillTemplate('./templates/pages/backup.html', templateValues);
+                  res.send(html);
+                })
+                .on('end', () => {
+                  templateValues[backupType + 'UploadSuccess'] = 'Uploaded Successfully!';
+                  html = this.fillTemplate('./templates/pages/backup.html', templateValues);
+                  res.send(html);
+                  fs.unlink(uploadPath, (err) => {
+                    if (err) {
+                      console.error(err);
+                    } else {
+                      console.log('Deleted backup file ' + uploadPath);
+                    }
+                  })
+                });
+            }
+          });
+        } else {
+          templateValues['generalError'] = '<p>' + backupType + ' is not a valid backup type.</p>';
+          html = this.fillTemplate('./templates/pages/backup.html', templateValues);
+          res.send(html);
+        }
+      } else {
+        res.send(html);
+      }
+    } else {
+      res.status(400).send();
     }
   });
 

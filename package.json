@@ -18,6 +18,7 @@
     "filenamify": "^2.1.0",
     "helmet": "^3.15.0",
     "jquery": "^3.3.1",
+    "onezip": "^3.1.1",
     "snarkdown": "^1.2.2",
     "socket.io": "^2.2.0",
     "socket.io-client": "^2.2.0",

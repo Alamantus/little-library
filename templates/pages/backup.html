@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Backup</title>
+</head>
+<body>
+<h1>Backup/Restore</h1>
+<p>
+  This page allows you to download a <code>.zip</code> file of your Files folder and your History
+  folder or re-import one of the zipped files you received from a backup.
+</p>
+
+<h2>Export</h2>
+<p>
+  <a href="#" id="filesDownload">
+    <button>Back Up the <code>files</code> Folder</button>
+  </a> {{filesDownload}}
+</p>
+<p>
+  <a href="#" id="historyDownload">
+    <button>Back Up the <code>history</code> Folder</button>
+  </a> {{historyDownload}}
+</p>
+
+<h2>Import</h2>
+{{generalError}}
+<form id="filesForm" action="." method="post" enctype="multipart/form-data">
+  <p>
+    <label for="filesUpload">Files Backup <code>.zip</code></label><br>
+    <input type="file" name="files" id="filesUpload" accept=".zip">
+    {{filesUploadSuccess}}
+  </p>
+  <p>
+    <input type="submit" value="Upload Files Backup">
+  </p>
+</form>
+<form id="historyForm" action="." method="post" enctype="multipart/form-data">
+  <p>
+    <label for="historyUpload">History Backup <code>.zip</code></label><br>
+    <input type="file" name="history" id="historyUpload" accept=".zip">
+    {{historyUploadSuccess}}
+  </p>
+  <p>
+    <input type="submit" value="Upload History Backup">
+  </p>
+</form>
+
+<script>
+function getParameterByName(name, url) {
+  if (!url) url = window.location.href;
+  name = name.replace(/[\[\]]/g, '\\$&');
+  var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+    results = regex.exec(url);
+  if (!results) return null;
+  if (!results[2]) return '';
+  return decodeURIComponent(results[2].replace(/\+/g, ' '));
+}
+
+window.onload = function() {
+  var pass = getParameterByName('pass');
+  var filesDownloadLink = document.getElementById('filesDownload');
+  var historyDownloadLink = document.getElementById('historyDownload');
+  var filesForm = document.getElementById('filesForm');
+  var historyForm = document.getElementById('historyForm');
+  filesDownloadLink.href = './backup?pass=' + pass + '&dl=files';
+  historyDownloadLink.href = './backup?pass=' + pass + '&dl=history';
+  filesForm.action = './backup?pass=' + pass;
+  historyForm.action = './backup?pass=' + pass;
+}
+</script>
+</body>
+</html>

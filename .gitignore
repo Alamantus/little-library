@@ -3,4 +3,5 @@ public/files/*.epub
 public/files/*.mobi
 public/files/*.pdf
 public/files/*.json
+public/files/*.zip
 public/history/*.json
