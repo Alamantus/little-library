@@ -8,5 +8,6 @@
   "maxFileSize": 0,
   "maxHistory": 0,
   "allowedFormats": [".epub", ".mobi", ".pdf"],
-  "backupPassword": "password"
+  "backupPassword": "password",
+  "hideVisitors": false
 }

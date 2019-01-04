@@ -244,8 +244,10 @@ function Server () {
   });
 
   this.io.on('connection', socket => {
-    this.connections++;
-    this.io.emit('update visitors', this.connections);
+    if (!settings.hideVisitors) {
+      this.connections++;
+      this.io.emit('update visitors', this.connections);
+    }
 
     socket.on('take book', bookId => {
       const fileLocation = this.takeBook(bookId, socket.id);
@@ -258,8 +260,10 @@ function Server () {
     });
 
     socket.on('disconnect', () => {
-      this.connections--;
-      this.io.emit('update visitors', this.connections);
+      if (!settings.hideVisitors) {
+        this.connections--;
+        this.io.emit('update visitors', this.connections);
+      }
       this.deleteBooks(socket.id);
     });
   });
