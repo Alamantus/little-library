@@ -1,10 +1,67 @@
-<div class="content">
-  <p>
-    {{siteTitle}} is a digital give a book, take a book website for e-books.
-  </p>
-  <p>
-    Books that can be diven and are available here are in the following formats:<br>
-    <code>{{allowedFormats}}</code><br>
-    with {{maxFileSize}} maximum file size.
-  </p>
+<div class="columns">
+  <div class="column is-8 is-offset-2">
+    <h2 class="title">About</h2>
+    <div class="content">
+      <p>
+        {{siteTitle}} is a digital give a book, take a book website for e-books. Books on this
+        site are treated as though they were physical, meaning that when someone takes a book,
+        it becomes unavailable to be downloaded.
+      </p>
+      <p>
+        Books that can be given and are available here are in the following file formats:<br>
+        <code>{{allowedFormats}}</code><br>
+        with {{maxFileSize}} maximum file size.
+      </p>
+
+      <h3>Browsing</h3>
+      <p>
+        You can view the available books on the home page of the site in exactly the way that they were
+        provided by others. Items listed show the title, author (if provided), and the file type of the
+        book, and clicking the item will reveal more information about the book, including the contributor
+        and the contributor's reason for adding the book.
+      </p>
+      <p>
+        While browsing, you will notice that there is a number in the top left corner of the website that
+        shows how many people are currently looking at the library, including you. This number updates in
+        real time as people come and go. If you are looking at a book and someone takes it, you will be
+        notified that it was taken and will not be able to take it yourself. Please note that you cannot
+        see what another person might be looking at, so the same thing happens to others when you take a
+        book they are looking at&mdash;it is not a personal sleight against you if a book is taken.
+      </p>
+      <p>
+        You can also browse the history of the shelf and see what books had once been in the library as
+        well as what the contributor wrote about it.
+      </p>
+
+      <h3>Taking</h3>
+      <p>
+        When looking at a book's information, you will notice a "Take Book" button. Clicking that will
+        allow you to start the download process.
+      </p>
+      <p>
+        After confirming that you understand, a new button labeled "Download" link will appear. Click it
+        to start the download to your device. As soon as you confirm that you understand, the book will
+        instantly become unavailable to anyone else viewing the library! If you leave or even refresh the
+        page before downloading the file, <em>it will be unavailable</em>. Once you leave the page after
+        clicking the "I understand" button, the file is <strong><em>deleted from the server</em></strong>.
+      </p>
+      <p>
+        Please be careful, considerate, and responsible so you do not accidentally lose the file forever.
+      </p>
+
+      <h3>Giving</h3>
+      <p>
+        When you give a book, in addition to the file itself, you are required to include the title
+        of the book and your reason for giving it. You are encouraged to include your thoughts about
+        the book when giving your reason.
+        While it is not required, you are encouraged to also include the author of the book and your own
+        name. 
+      </p>
+      <p>
+        When your book is taken from the shelf, the data that you entered when giving it will remain in
+        the <a href="{{resourcePath}}history">History listing</a> so that anyone can look at what books
+        had been on the shelf at one time and see what the contributor thought about it.
+      </p>
+    </div>
+  </div>
 </div>

@@ -133,7 +133,8 @@ function Server () {
   });
 
   this.server.get('/about', (req, res) => {
-    const body = this.fillTemplate('./templates/pages/about.html');
+    const resourcePath = (req.url.substr(-1) === '/' ? '../' : './');
+    const body = this.fillTemplate('./templates/pages/about.html', { resourcePath });
     const html = this.fillTemplate('./templates/htmlContainer.html', { title: 'About', body });
     if (html) {
       res.send(html);
