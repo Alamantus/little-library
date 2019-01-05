@@ -418,8 +418,8 @@ Server.prototype.generateHistoryPage = function (req) {
 }
 
 Server.prototype.start = function () {
-  this.http.listen(settings.port, () => {
-    console.log('Started server on port ' + settings.port);
+  this.http.listen((process.env.PORT || settings.port), () => {
+    console.log('Started server on port ' + (process.env.PORT || settings.port));
   });
 }
 
