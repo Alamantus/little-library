@@ -1,60 +1,64 @@
-<h2 class="title">
-  Give a Book
-</h2>
+<div class="columns">
+  <div class="column is-8 is-offset-2">
+    <h2 class="title">
+      Give a Book
+    </h2>
 
-<div class="content">
-  <p>
-    Use this form to add a book to the library!
-  </p>
+    <div class="content">
+      <p>
+        Use this form to add a book to the library!
+      </p>
+    </div>
+
+    <form action="{{resourcePath}}give" method="post" enctype="multipart/form-data">
+      <div class="field">
+        <div class="file is-boxed has-name">
+          <label class="file-label">
+            <input class="file-input" type="file" name="book" id="book" accept="{{allowedFormats}}">
+            <span class="file-cta">
+              <span class="file-icon">
+                <i class="fas fa-upload"></i>
+              </span>
+              <span class="file-label has-text-centered">
+                Choose a Book File <code>{{allowedFormats}}</code> ({{maxFileSize}} maximum size)
+              </span>
+            </span>
+            <span class="file-name has-text-centered" id="bookFileName">
+              None Selected
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label" for="title">Book Title:</label>
+        <div class="control">
+          <input type="text" class="input" name="title" id="title" value="{{title}}">
+        </div>
+      </div>
+      <div class="field">
+        <label class="label" for="author"><span class="is-italic has-text-weight-normal has-text-grey">(Optional)</span> Book Author:</label>
+        <div class="control">
+          <input type="text" class="input" name="author" id="author" value="{{author}}">
+        </div>
+      </div>
+      <div class="field">
+        <label class="label" for="summary">Why you're sharing it:</label>
+        <div class="control">
+          <div class="help">Markdown Enabled</div>
+          <textarea class="textarea" name="summary" id="summary">{{summary}}</textarea>
+        </div>
+      </div>
+      <div class="field">
+        <label class="label" for="contributor"><span class="is-italic has-text-weight-normal has-text-grey">(Optional)</span> Your name:</label>
+        <div class="control">
+          <input type="text" class="input" name="contributor" id="contributor" value="{{contributor}}">
+        </div>
+      </div>
+
+      <div class="field">
+        <input class="button" type="submit" value="Give Book" name="submit">
+      </div>
+    </form>
+  </div>
 </div>
-
-<form action="{{resourcePath}}give" method="post" enctype="multipart/form-data">
-  <div class="field">
-    <div class="file is-boxed has-name">
-      <label class="file-label">
-        <input class="file-input" type="file" name="book" id="book" accept="{{allowedFormats}}">
-        <span class="file-cta">
-          <span class="file-icon">
-            <i class="fas fa-upload"></i>
-          </span>
-          <span class="file-label has-text-centered">
-            Choose a Book File <code>{{allowedFormats}}</code> ({{maxFileSize}} maximum size)
-          </span>
-        </span>
-        <span class="file-name has-text-centered" id="bookFileName">
-          None Selected
-        </span>
-      </label>
-    </div>
-  </div>
-
-  <div class="field">
-    <label class="label" for="title">Book Title:</label>
-    <div class="control">
-      <input type="text" class="input" name="title" id="title" value="{{title}}">
-    </div>
-  </div>
-  <div class="field">
-    <label class="label" for="author"><span class="is-italic has-text-weight-normal has-text-grey">(Optional)</span> Book Author:</label>
-    <div class="control">
-      <input type="text" class="input" name="author" id="author" value="{{author}}">
-    </div>
-  </div>
-  <div class="field">
-    <label class="label" for="summary">Why you're sharing it:</label>
-    <div class="control">
-      <div class="help">Markdown Enabled</div>
-      <textarea class="textarea" name="summary" id="summary">{{summary}}</textarea>
-    </div>
-  </div>
-  <div class="field">
-    <label class="label" for="contributor"><span class="is-italic has-text-weight-normal has-text-grey">(Optional)</span> Your name:</label>
-    <div class="control">
-      <input type="text" class="input" name="contributor" id="contributor" value="{{contributor}}">
-    </div>
-  </div>
-
-  <div class="field">
-    <input class="button" type="submit" value="Give Book" name="submit">
-  </div>
-</form>
