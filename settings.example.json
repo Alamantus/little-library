@@ -12,5 +12,6 @@
   "hideVisitors": false,
   "sslPrivateKey": null,
   "sslCertificate": null,
-  "sslCertificateAuthority": null
+  "sslCertificateAuthority": null,
+  "forceHTTPS": false
 }

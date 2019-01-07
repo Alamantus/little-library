@@ -55,6 +55,15 @@ function Server () {
   if (fs.existsSync(path.resolve('./.well-known'))) {
     this.server.use('/.well-known', express.static(path.resolve('./.well-known')));
   }
+
+  if (this.https && settings.forceHTTPS) {
+    this.server.use(function (req, res, next) {
+      if (!req.secure) {
+        return res.redirect(['https://', req.get('Host'), req.baseUrl].join(''));
+      }
+      next();
+    });
+  }
   
   this.server.get('/', (req, res) => {
     const html = this.generateHomePage(req);
