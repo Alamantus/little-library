@@ -2,6 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const express = require('express');
 const http = require('http');
+const https = require('https');
 const socketio = require('socket.io');
 const helmet = require('helmet');
 const bodyParser = require('body-parser');
@@ -13,10 +14,14 @@ const snarkdown = require('snarkdown');
 const fecha = require('fecha');
 
 const settings = require('./settings.json');
+const privateKey = settings.sslPrivateKey ? fs.readFileSync(settings.sslPrivateKey, 'utf8') : null;
+const certificate = settings.sslCertificate ? fs.readFileSync(settings.sslCertificate, 'utf8') : null;
+const ca = settings.sslCertificateAuthority ? fs.readFileSync(settings.sslCertificateAuthority, 'utf8') : null;
 
 function Server () {
   this.server = express();
   this.http = http.Server(this.server);
+  this.https = privateKey && certificate ? https.createServer({ key: privateKey, cert: certificate, ca }, this.server) : null;
   this.io = socketio(this.http);
 
   this.fileLocation = path.resolve(settings.fileLocation);
@@ -46,6 +51,11 @@ function Server () {
   this.server.use('/js', express.static(path.resolve('./node_modules/jquery/dist/')));
   this.server.use('/js', express.static(path.resolve('./node_modules/socket.io-client/dist/')));
 
+  // If a `.well-known` directory exists, allow it to be used for things like Let's Encrypt challenges
+  if (fs.existsSync(path.resolve('./.well-known'))) {
+    this.server.use('/.well-known', express.static(path.resolve('./.well-known')));
+  }
+  
   this.server.get('/', (req, res) => {
     const html = this.generateHomePage(req);
     if (html) {
@@ -421,6 +431,11 @@ Server.prototype.start = function () {
   this.http.listen((process.env.PORT || settings.port), () => {
     console.log('Started server on port ' + (process.env.PORT || settings.port));
   });
+  if (this.https) {
+    this.https.listen(443, () => {
+      console.log('Started SSL server on port 443');
+    });
+  }
 }
 
 Server.prototype.addBook = function (uploadData = {}, success = () => {}, error = () => {}) {

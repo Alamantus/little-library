@@ -9,5 +9,8 @@
   "maxHistory": 0,
   "allowedFormats": [".epub", ".mobi", ".pdf"],
   "backupPassword": "password",
-  "hideVisitors": false
+  "hideVisitors": false,
+  "sslPrivateKey": null,
+  "sslCertificate": null,
+  "sslCertificateAuthority": null
 }

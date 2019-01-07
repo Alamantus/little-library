@@ -5,5 +5,6 @@ public/files/*.pdf
 public/files/*.json
 public/files/*.zip
 public/history/*.json
+.well-known/
 
 settings.json
