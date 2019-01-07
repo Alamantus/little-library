@@ -3,7 +3,7 @@ const fs = require('fs');
 const express = require('express');
 const http = require('http');
 const https = require('https');
-const socketio = require('socket.io');
+const SocketIoServer = require('socket.io');
 const helmet = require('helmet');
 const bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
@@ -22,7 +22,13 @@ function Server () {
   this.server = express();
   this.http = http.Server(this.server);
   this.https = privateKey && certificate ? https.createServer({ key: privateKey, cert: certificate, ca }, this.server) : null;
-  this.io = socketio(this.http);
+  this.io = new SocketIoServer();
+  if (!settings.forceHTTPS) {
+    this.io.attach(this.http);
+  }
+  if (this.https) {
+    this.io.attach(this.https);
+  }
 
   this.fileLocation = path.resolve(settings.fileLocation);
   this.historyLocation = path.resolve(settings.historyLocation);
@@ -61,7 +67,7 @@ function Server () {
       if (!req.secure) {
         return res.redirect(['https://', req.get('Host'), req.baseUrl].join(''));
       }
-      next();
+      next();0
     });
   }
   
