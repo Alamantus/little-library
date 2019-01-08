@@ -1,16 +1,23 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Backup</title>
+  <title>Tools{{titleSeparator}}{{siteTitle}}</title>
 </head>
 <body>
-<h1>Backup/Restore</h1>
+<h1>Tools</h1>
+<h3>Management</h3>
 <p>
-  This page allows you to download a <code>.zip</code> file of your Files folder and your History
+  <a href="#" id="resetVisitors">
+    <button>Reset Visitors Count</button>
+  </a> {{resetVisitors}}
+</p>
+<h3>Backup/Restore</h3>
+<p>
+  These tools allows you to download a <code>.zip</code> file of your Files folder and your History
   folder or re-import one of the zipped files you received from a backup.
 </p>
 
-<h2>Export</h2>
+<h5>Export</h5>
 <p>
   <a href="#" id="filesDownload">
     <button>Back Up the <code>files</code> Folder</button>
@@ -22,7 +29,7 @@
   </a> {{historyDownload}}
 </p>
 
-<h2>Import</h2>
+<h5>Import</h5>
 {{generalError}}
 <form id="filesForm" action="." method="post" enctype="multipart/form-data">
   <p>
@@ -58,14 +65,16 @@ function getParameterByName(name, url) {
 
 window.onload = function() {
   var pass = getParameterByName('pass');
+  var resetVisitorsLink = document.getElementById('resetVisitors');
   var filesDownloadLink = document.getElementById('filesDownload');
   var historyDownloadLink = document.getElementById('historyDownload');
   var filesForm = document.getElementById('filesForm');
   var historyForm = document.getElementById('historyForm');
-  filesDownloadLink.href = './backup?pass=' + pass + '&dl=files';
-  historyDownloadLink.href = './backup?pass=' + pass + '&dl=history';
-  filesForm.action = './backup?pass=' + pass;
-  historyForm.action = './backup?pass=' + pass;
+  resetVisitorsLink.href = './tools?pass=' + pass + '&do=resetVisitors';
+  filesDownloadLink.href = './tools?pass=' + pass + '&dl=files';
+  historyDownloadLink.href = './tools?pass=' + pass + '&dl=history';
+  filesForm.action = './tools?pass=' + pass;
+  historyForm.action = './tools?pass=' + pass;
 }
 </script>
 </body>

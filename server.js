@@ -48,7 +48,7 @@ function Server () {
       fileSize: (settings.maxFileSize > 0 ? settings.maxFileSize * 1024 * 1024 : Infinity), // filesize in bytes (settings accepts MB)
     },
   }));
-  this.server.use('/backup', fileUpload()); // Allow file upload on backup with no limits.
+  this.server.use('/tools', fileUpload()); // Allow file upload on backup with no limits.
 
   this.server.use('/files', express.static(path.join(__dirname, './public/files/')));
   this.server.use('/css', express.static(path.resolve('./node_modules/bulma/css/')));
@@ -168,12 +168,17 @@ function Server () {
     }
   });
 
-  this.server.get('/backup', (req, res) => {
-    if (req.query.pass === settings.backupPassword) {
+  this.server.get('/tools', (req, res) => {
+    if (req.query.pass === settings.toolsPassword) {
       const templateValues = {};
-      let html = this.fillTemplate('./templates/pages/backup.html', templateValues);
+      let html = this.fillTemplate('./templates/pages/tools.html', templateValues);
 
-      if (req.query.dl && ['files', 'history'].includes(req.query.dl)) {
+      if (req.query.do && ['resetVisitors'].includes(req.query.do)) {
+        this.connections = 0;
+        templateValues.resetVisitors = 'Done!';
+        html = this.fillTemplate('./templates/pages/tools.html', templateValues);
+        res.send(html);
+      } else if (req.query.dl && ['files', 'history'].includes(req.query.dl)) {
         const onezip = require('onezip');
         const { dl } = req.query;
         const saveLocation = path.resolve(this.fileLocation, dl + 'Backup.zip');
@@ -186,7 +191,7 @@ function Server () {
           .on('error', (error) => {
             console.error(error);
             templateValues[dl + 'Download'] = 'Something went wrong: ' + JSON.stringify(error);
-            html = this.fillTemplate('./templates/pages/backup.html', templateValues);
+            html = this.fillTemplate('./templates/pages/tools.html', templateValues);
             res.send(html);
           })
           .on('end', () => {
@@ -194,7 +199,7 @@ function Server () {
             let backupLocation = saveLocation.replace(/\\/g, '/');
             backupLocation = backupLocation.substr(backupLocation.lastIndexOf('/'));
             templateValues[dl + 'Download'] = '<a download href="' + encodeURI('./files' + backupLocation) + '">Download</a> (This will be removed from the server in 1 hour)';
-            html = this.fillTemplate('./templates/pages/backup.html', templateValues);
+            html = this.fillTemplate('./templates/pages/tools.html', templateValues);
             res.send(html);
             console.log('Will delete ' + saveLocation + ' in 1 hour');
             setTimeout(() => {
@@ -214,10 +219,10 @@ function Server () {
       res.status(400).send();
     }
   });
-  this.server.post('/backup', (req, res) => {
-    if (req.query.pass === settings.backupPassword) {
+  this.server.post('/tools', (req, res) => {
+    if (req.query.pass === settings.toolsPassword) {
       const templateValues = {};
-      let html = this.fillTemplate('./templates/pages/backup.html', templateValues);
+      let html = this.fillTemplate('./templates/pages/tools.html', templateValues);
 
       const { files } = req;
       if (Object.keys(files).length > 0) {
@@ -229,7 +234,7 @@ function Server () {
             if (err) {
               console.error(error);
               templateValues[backupType + 'UploadSuccess'] = 'Could not upload the file.';
-              html = this.fillTemplate('./templates/pages/backup.html', templateValues);
+              html = this.fillTemplate('./templates/pages/tools.html', templateValues);
               res.send(html);
             } else {
               onezip.extract(uploadPath, path.resolve('./public', backupType))
@@ -239,12 +244,12 @@ function Server () {
                 .on('error', (error) => {
                   console.error(error);
                   templateValues[backupType + 'UploadSuccess'] = 'Something went wrong: ' + JSON.stringify(error);
-                  html = this.fillTemplate('./templates/pages/backup.html', templateValues);
+                  html = this.fillTemplate('./templates/pages/tools.html', templateValues);
                   res.send(html);
                 })
                 .on('end', () => {
                   templateValues[backupType + 'UploadSuccess'] = 'Uploaded Successfully!';
-                  html = this.fillTemplate('./templates/pages/backup.html', templateValues);
+                  html = this.fillTemplate('./templates/pages/tools.html', templateValues);
                   res.send(html);
                   fs.unlink(uploadPath, (err) => {
                     if (err) {
@@ -258,7 +263,7 @@ function Server () {
           });
         } else {
           templateValues['generalError'] = '<p>' + backupType + ' is not a valid backup type.</p>';
-          html = this.fillTemplate('./templates/pages/backup.html', templateValues);
+          html = this.fillTemplate('./templates/pages/tools.html', templateValues);
           res.send(html);
         }
       } else {
@@ -288,6 +293,7 @@ function Server () {
     socket.on('disconnect', () => {
       if (!settings.hideVisitors) {
         this.connections--;
+        if (this.connections < 0) this.connections = 0;
         this.io.emit('update visitors', this.connections);
       }
       this.deleteBooks(socket.id);
