@@ -19,25 +19,25 @@ module.exports = function (app) {
       const id = fileName.replace('.json', '');
       const confirmId = 'confirm_' + id;
       const added = fecha.format(new Date(bookData.added), 'hh:mm:ssA on dddd MMMM Do, YYYY');
-      const modal = app.fillTemplate('./templates/elements/modalCard.html', {
+      const modal = app.templater.fill('./templates/elements/modalCard.html', {
         id,
         header: '<h2 class="title">' + bookData.title + '</h2><h4 class="subtitle">' + bookData.author + '</h4>',
-        content: app.fillTemplate('./templates/elements/bookInfo.html', {
+        content: app.templater.fill('./templates/elements/bookInfo.html', {
           contributor: bookData.contributor,
           fileFormat: bookData.fileType,
           added,
           summary: snarkdown(bookData.summary),
         })
-          + app.fillTemplate('./templates/elements/modal.html', {
+          + app.templater.fill('./templates/elements/modal.html', {
             id: confirmId,
-            content: app.fillTemplate('./templates/elements/messageBox.html', {
+            content: app.templater.fill('./templates/elements/messageBox.html', {
               header: 'Download Your Book',
-              message: app.fillTemplate('./templates/elements/takeConfirm.html', { id }),
+              message: app.templater.fill('./templates/elements/takeConfirm.html', { id }),
             }),
           }),
         footer: '<a class="button close">Close</a> <a class="button is-success modal-button" data-modal="' + confirmId + '">Take Book</a>',
       });
-      return app.fillTemplate('./templates/elements/book.html', {
+      return app.templater.fill('./templates/elements/book.html', {
         id,
         title: bookData.title,
         author: bookData.author,
@@ -51,7 +51,7 @@ module.exports = function (app) {
     }
 
     const body = '<h2 class="title">Available Books</h2><div class="columns is-multiline">' + books + '</div>';
-    const html = app.fillTemplate('./templates/htmlContainer.html', {
+    const html = app.templater.fill('./templates/htmlContainer.html', {
       title: 'View',
       resourcePath: (req.url.substr(-1) === '/' ? '../' : './'),
       body

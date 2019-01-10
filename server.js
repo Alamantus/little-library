@@ -13,6 +13,8 @@ const privateKey = settings.sslPrivateKey ? fs.readFileSync(settings.sslPrivateK
 const certificate = settings.sslCertificate ? fs.readFileSync(settings.sslCertificate, 'utf8') : null;
 const ca = settings.sslCertificateAuthority ? fs.readFileSync(settings.sslCertificateAuthority, 'utf8') : null;
 
+const Templater = require('./templates/Templater');
+
 function Server () {
   this.server = express();
   this.http = http.Server(this.server);
@@ -28,7 +30,7 @@ function Server () {
   this.fileLocation = path.resolve(settings.fileLocation);
   this.historyLocation = path.resolve(settings.historyLocation);
 
-  this.templateCache = {};
+  this.templater = new Templater(this);
 
   this.connections = 0;
   this.takenBooks = [];
@@ -50,42 +52,11 @@ function Server () {
   require('./routes/socketio')(this);
 }
 
-Server.prototype.fillTemplate = function (file, templateVars = {}) {
-  let data;
-  if (this.templateCache.hasOwnProperty(file)) {
-    data = this.templateCache[file];
-  } else {
-    data = fs.readFileSync(path.resolve(file), 'utf8');
-  }
-  if (data) {
-    if (!this.templateCache.hasOwnProperty(file)) {
-      this.templateCache[file] = data;
-    }
-
-    let filledTemplate = data.replace(/\{\{siteTitle\}\}/g, settings.siteTitle)
-      .replace(/\{\{titleSeparator\}\}/g, settings.titleSeparator)
-      .replace(/\{\{allowedFormats\}\}/g, settings.allowedFormats.join(','))
-      .replace(/\{\{maxFileSize\}\}/g, (settings.maxFileSize > 0 ? settings.maxFileSize + 'MB' : 'no'));
-
-    for (let templateVar in templateVars) {
-      const regExp = new RegExp('\{\{' + templateVar + '\}\}', 'g')
-      filledTemplate = filledTemplate.replace(regExp, templateVars[templateVar]);
-    }
-
-    // If any template variable is not provided, don't even render them.
-    filledTemplate = filledTemplate.replace(/\{\{[a-zA-Z0-9\-_]+\}\}/g, '');
-
-    return filledTemplate;
-  }
-  
-  return data;
-}
-
 Server.prototype.replaceBodyWithTooManyBooksWarning = function (body) {
   if (settings.maxLibrarySize > 0) {
     const numberOfBooks = fs.readdirSync(this.fileLocation).filter(fileName => fileName.includes('.json')).length;
     if (numberOfBooks >= settings.maxLibrarySize) {
-      body = this.fillTemplate('./templates/elements/messageBox.html', {
+      body = this.templater.fill('./templates/elements/messageBox.html', {
         style: 'is-danger',
         title: 'Library Full',
         message: 'Sorry, the library has reached its maximum capacity for books! You will need to wait until a book is taken before a new one can be added.',

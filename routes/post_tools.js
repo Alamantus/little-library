@@ -5,7 +5,7 @@ module.exports = function (app) {
   app.server.post('/tools', (req, res) => {
     if (req.query.pass === settings.toolsPassword) {
       const templateValues = {};
-      let html = app.fillTemplate('./templates/pages/tools.html', templateValues);
+      let html = app.templater.fill('./templates/pages/tools.html', templateValues);
 
       const { files } = req;
       if (Object.keys(files).length > 0) {
@@ -17,7 +17,7 @@ module.exports = function (app) {
             if (err) {
               console.error(error);
               templateValues[backupType + 'UploadSuccess'] = 'Could not upload the file.';
-              html = app.fillTemplate('./templates/pages/tools.html', templateValues);
+              html = app.templater.fill('./templates/pages/tools.html', templateValues);
               res.send(html);
             } else {
               onezip.extract(uploadPath, path.resolve('./public', backupType))
@@ -27,12 +27,12 @@ module.exports = function (app) {
                 .on('error', (error) => {
                   console.error(error);
                   templateValues[backupType + 'UploadSuccess'] = 'Something went wrong: ' + JSON.stringify(error);
-                  html = app.fillTemplate('./templates/pages/tools.html', templateValues);
+                  html = app.templater.fill('./templates/pages/tools.html', templateValues);
                   res.send(html);
                 })
                 .on('end', () => {
                   templateValues[backupType + 'UploadSuccess'] = 'Uploaded Successfully!';
-                  html = app.fillTemplate('./templates/pages/tools.html', templateValues);
+                  html = app.templater.fill('./templates/pages/tools.html', templateValues);
                   res.send(html);
                   fs.unlink(uploadPath, (err) => {
                     if (err) {
@@ -46,7 +46,7 @@ module.exports = function (app) {
           });
         } else {
           templateValues['generalError'] = '<p>' + backupType + ' is not a valid backup type.</p>';
-          html = app.fillTemplate('./templates/pages/tools.html', templateValues);
+          html = app.templater.fill('./templates/pages/tools.html', templateValues);
           res.send(html);
         }
       } else {

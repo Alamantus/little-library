@@ -8,32 +8,32 @@ module.exports = function (app) {
       const { book } = req.files;
       const fileType = book.name.substr(book.name.lastIndexOf('.'));
       app.addBook({ book, title, author, summary, contributor, fileType }, () => {
-        const messageBox = app.fillTemplate('./templates/elements/messageBox.html', {
+        const messageBox = app.templater.fill('./templates/elements/messageBox.html', {
           style: 'is-success',
           header: 'Upload Successful',
           message: 'Thank you for your contribution!'
         });
-        const modal = app.fillTemplate('./templates/elements/modal.html', {
+        const modal = app.templater.fill('./templates/elements/modal.html', {
           isActive: 'is-active',
           content: messageBox,
         });
-        let body = app.fillTemplate('./templates/pages/uploadForm.html', { resourcePath });
+        let body = app.templater.fill('./templates/pages/uploadForm.html', { resourcePath });
         body = app.replaceBodyWithTooManyBooksWarning(body);
-        const html = app.fillTemplate('./templates/htmlContainer.html', { title: 'Give a Book', resourcePath, body, modal });
+        const html = app.templater.fill('./templates/htmlContainer.html', { title: 'Give a Book', resourcePath, body, modal });
         res.send(html);
       }, (err) => {
-        const messageBox = app.fillTemplate('./templates/elements/messageBox.html', {
+        const messageBox = app.templater.fill('./templates/elements/messageBox.html', {
           style: 'is-danger',
           header: 'Upload Failed',
           message: err,
         });
-        const modal = app.fillTemplate('./templates/elements/modal.html', {
+        const modal = app.templater.fill('./templates/elements/modal.html', {
           isActive: 'is-active',
           content: messageBox,
         });
-        let body = app.fillTemplate('./templates/pages/uploadForm.html', { resourcePath, title, author, summary, contributor });
+        let body = app.templater.fill('./templates/pages/uploadForm.html', { resourcePath, title, author, summary, contributor });
         body = app.replaceBodyWithTooManyBooksWarning(body);
-        const html = app.fillTemplate('./templates/htmlContainer.html', { title: 'Give a Book', resourcePath, body, modal });
+        const html = app.templater.fill('./templates/htmlContainer.html', { title: 'Give a Book', resourcePath, body, modal });
         res.send(html);
       });
     } else {
@@ -47,14 +47,14 @@ module.exports = function (app) {
       if (!req.body.hasOwnProperty('summary') || req.body.summary.trim() === '') {
         errorMessage += (errorMessage.length > 0 ? '<br>' : '') + 'You have not written a summary.';
       }
-      const message = app.fillTemplate('./templates/elements/messageBox.html', {
+      const message = app.templater.fill('./templates/elements/messageBox.html', {
         style: 'is-danger',
         header: 'Missing Required Fields',
         message: errorMessage,
       });
-      let body = app.fillTemplate('./templates/pages/uploadForm.html', { resourcePath, title, author, summary, contributor });
+      let body = app.templater.fill('./templates/pages/uploadForm.html', { resourcePath, title, author, summary, contributor });
       body = app.replaceBodyWithTooManyBooksWarning(body);
-      const html = app.fillTemplate('./templates/htmlContainer.html', { title: 'Give a Book', resourcePath, body, message });
+      const html = app.templater.fill('./templates/htmlContainer.html', { title: 'Give a Book', resourcePath, body, message });
       res.send(html);
     }
   });

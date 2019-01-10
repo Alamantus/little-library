@@ -5,12 +5,12 @@ module.exports = function (app) {
   app.server.get('/tools', (req, res) => {
     if (req.query.pass === settings.toolsPassword) {
       const templateValues = {};
-      let html = app.fillTemplate('./templates/pages/tools.html', templateValues);
+      let html = app.templater.fill('./templates/pages/tools.html', templateValues);
 
       if (req.query.do && ['resetVisitors'].includes(req.query.do)) {
         app.connections = 0;
         templateValues.resetVisitors = 'Done!';
-        html = app.fillTemplate('./templates/pages/tools.html', templateValues);
+        html = app.templater.fill('./templates/pages/tools.html', templateValues);
         res.send(html);
       } else if (req.query.dl && ['files', 'history'].includes(req.query.dl)) {
         const onezip = require('onezip');
@@ -25,7 +25,7 @@ module.exports = function (app) {
           .on('error', (error) => {
             console.error(error);
             templateValues[dl + 'Download'] = 'Something went wrong: ' + JSON.stringify(error);
-            html = app.fillTemplate('./templates/pages/tools.html', templateValues);
+            html = app.templater.fill('./templates/pages/tools.html', templateValues);
             res.send(html);
           })
           .on('end', () => {
@@ -33,7 +33,7 @@ module.exports = function (app) {
             let backupLocation = saveLocation.replace(/\\/g, '/');
             backupLocation = backupLocation.substr(backupLocation.lastIndexOf('/'));
             templateValues[dl + 'Download'] = '<a download href="' + encodeURI('./files' + backupLocation) + '">Download</a> (This will be removed from the server in 1 hour)';
-            html = app.fillTemplate('./templates/pages/tools.html', templateValues);
+            html = app.templater.fill('./templates/pages/tools.html', templateValues);
             res.send(html);
             console.log('Will delete ' + saveLocation + ' in 1 hour');
             setTimeout(() => {
