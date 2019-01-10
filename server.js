@@ -50,6 +50,11 @@ function Server () {
   require('./routes/post_tools')(this);
 
   require('./routes/socketio')(this);
+
+  if (settings.federate) {
+    require('./routes/activitypub/get_webfinger')(this);
+    require('./routes/activitypub/get_actor')(this);
+  }
 }
 
 Server.prototype.replaceBodyWithTooManyBooksWarning = function (body) {

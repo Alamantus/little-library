@@ -13,5 +13,8 @@
   "sslPrivateKey": null,
   "sslCertificate": null,
   "sslCertificateAuthority": null,
-  "forceHTTPS": false
+  "forceHTTPS": false,
+  "federate": true,
+  "domain": "localhost",
+  "publicKey": null
 }
