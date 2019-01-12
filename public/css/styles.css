@@ -2,3 +2,109 @@
 .modal-button {
   cursor: pointer;
 }
+
+/* Bookshelf Styling */
+.bookshelf {
+  border: 4px solid saddlebrown;
+  background: sienna;
+}
+
+.book-slot {
+  position: relative;
+  overflow: visible;
+  width: 100px;
+  height: 300px; /* The tallest a book could be */
+  border-bottom: 4px solid saddlebrown;
+  margin: 10px 0 -4px !important;
+}
+.book-slot.is-thin {
+  width: 80px;
+}
+.book-slot.is-thick {
+  width: 120px;
+}
+
+.book {
+  position: absolute;
+  overflow: visible;
+  top: 30px;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+.book.is-short {
+  top: 60px;
+}
+.book.is-tall {
+  top: 0;
+}
+
+.book .spine {
+  position: relative;
+  box-sizing: border-box;
+  background: #c0ffee;
+  border: 1px solid #aaa;
+  width: 100%;
+  height: 100%;
+  margin-bottom: 4px;
+  z-index: 1;
+  transition: all 0.25s;
+}
+.book:hover .spine {
+  width: 120%;
+  margin-left: -10%;
+  height: 120%;
+  margin-top: -20%;
+  z-index: 2;
+}
+
+.spine .text-container {
+  width: 260px;
+  transform: rotate(90deg) translateX(108px) translateY(58px);
+}
+.spine .title {
+  font-size: 1.3em;
+}
+.spine .subtitle {
+  font-size: 1.1em;
+}
+
+.book-slot.is-thin .book .spine .text-container {
+  transform: rotate(90deg) translateX(108px) translateY(78px);
+}
+.book-slot.is-thick .book .spine .text-container {
+  transform: rotate(90deg) translateX(108px) translateY(40px);
+}
+
+.book.is-short .spine .text-container {
+  width: 230px;
+  transform: rotate(90deg) translateX(98px) translateY(40px);
+}
+.book-slot.is-thin .book.is-short .spine .text-container {
+  transform: rotate(90deg) translateX(98px) translateY(60px);
+}
+.book-slot.is-thick .book.is-short .spine .text-container {
+  transform: rotate(90deg) translateX(98px) translateY(20px);
+}
+.book.is-short .spine .title {
+  font-size: 1.1em;
+}
+.book.is-short .spine .subtitle {
+  font-size: 0.9em;
+}
+.book.is-tall .spine .text-container {
+  width: 290px;
+  transform: rotate(90deg) translateX(120px) translateY(78px);
+}
+.book-slot.is-thin .book.is-tall .spine .text-container {
+  transform: rotate(90deg) translateX(120px) translateY(98px);
+}
+.book-slot.is-thick .book.is-tall .spine .text-container {
+  transform: rotate(90deg) translateX(120px) translateY(58px);
+}
+.book.is-tall .spine .title {
+  font-size: 1.5em;
+}
+.book.is-tall .spine .subtitle {
+  font-size: 1.3em;
+}
