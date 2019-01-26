@@ -15,7 +15,7 @@
   width: 100px;
   height: 300px; /* The tallest a book could be */
   border-bottom: 4px solid saddlebrown;
-  margin: 10px 0 -4px !important;
+  margin: 10px 1px -4px !important;
 }
 .book-slot.is-thin {
   width: 80px;

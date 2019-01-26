@@ -2,6 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const snarkdown = require('snarkdown');
 const fecha = require('fecha');
+const tinycolor = require('tinycolor2');
 
 const settings = require('../settings.json');
 
@@ -45,6 +46,10 @@ module.exports = function (app) {
         footer: '<a class="button close">Close</a> <a class="button is-success modal-button" data-modal="' + confirmId + '">Take Book</a>',
       });
       const maxSize = settings.maxFileSize > 0 ? settings.maxFileSize : 10;
+      let spineColor = tinycolor('#' + id.substr(0, 6));
+      if (!spineColor.isValid()) {
+        spineColor = tinycolor.random();
+      }
       return app.templater.fill('./templates/elements/book.html', {
         id,
         title: bookData.title,
@@ -52,8 +57,8 @@ module.exports = function (app) {
         thickness: (fileDetails.size > (maxSize * 0.3)) || (bookData.title.length > 28)
           ? 'is-thick' : (fileDetails.size < (maxSize * 0.6) ? 'is-thin' : ''),
         tallness: bookData.title.length > 16 ? 'is-tall' : (bookData.title.length < 8 ? 'is-short' : ''),
-        spineColor: '#ff0000',
-        textColor: '#ffffff',
+        spineColor: spineColor.toString(),
+        textColor: spineColor.isLight() ? '#000000' : '#ffffff',
         fileType: bookData.fileType,
         modal,
       });
@@ -63,7 +68,7 @@ module.exports = function (app) {
       books = '<div class="column"><div class="content">The shelf is empty. Would you like to <a href="/give">add a book</a>?</div></div>';
     }
 
-    const body = '<h2 class="title">Available Books</h2><div class="bookshelf columns is-gapless is-multiline">' + books + '</div>';
+    const body = '<h2 class="title">Available Books</h2><div class="bookshelf columns is-gapless is-multiline is-mobile">' + books + '</div>';
     const html = app.templater.fill('./templates/htmlContainer.html', {
       title: 'View',
       resourcePath: (req.url.substr(-1) === '/' ? '../' : './'),
