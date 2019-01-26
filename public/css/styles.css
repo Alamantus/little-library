@@ -60,7 +60,10 @@
 
 .spine .text-container {
   width: 260px;
-  transform: rotate(90deg) translateX(108px) translateY(58px);
+  height: 100px;
+  transform: rotate(90deg) translateX(82px) translateY(80px);
+  overflow: hidden;
+  word-break: break-all;
 }
 .spine .title {
   font-size: 1.3em;
@@ -70,21 +73,23 @@
 }
 
 .book-slot.is-thin .book .spine .text-container {
-  transform: rotate(90deg) translateX(108px) translateY(78px);
+  height: 80px;
+  transform: rotate(90deg) translateX(92px) translateY(92px);
 }
 .book-slot.is-thick .book .spine .text-container {
-  transform: rotate(90deg) translateX(108px) translateY(40px);
+  height: 120px;
+  transform: rotate(90deg) translateX(72px) translateY(72px);
 }
 
 .book.is-short .spine .text-container {
   width: 230px;
-  transform: rotate(90deg) translateX(98px) translateY(40px);
+  transform: rotate(90deg) translateX(68px) translateY(66px);
 }
 .book-slot.is-thin .book.is-short .spine .text-container {
-  transform: rotate(90deg) translateX(98px) translateY(60px);
+  transform: rotate(90deg) translateX(78px) translateY(76px);
 }
 .book-slot.is-thick .book.is-short .spine .text-container {
-  transform: rotate(90deg) translateX(98px) translateY(20px);
+  transform: rotate(90deg) translateX(58px) translateY(56px);
 }
 .book.is-short .spine .title {
   font-size: 1.1em;
@@ -94,17 +99,17 @@
 }
 .book.is-tall .spine .text-container {
   width: 290px;
-  transform: rotate(90deg) translateX(120px) translateY(78px);
+  transform: rotate(90deg) translateX(98px) translateY(95px);
 }
 .book-slot.is-thin .book.is-tall .spine .text-container {
-  transform: rotate(90deg) translateX(120px) translateY(98px);
+  transform: rotate(90deg) translateX(108px) translateY(106px);
 }
 .book-slot.is-thick .book.is-tall .spine .text-container {
-  transform: rotate(90deg) translateX(120px) translateY(58px);
+  transform: rotate(90deg) translateX(88px) translateY(86px);
 }
 .book.is-tall .spine .title {
-  font-size: 1.5em;
+  font-size: 1.3em;
 }
 .book.is-tall .spine .subtitle {
-  font-size: 1.3em;
+  font-size: 1.1em;
 }

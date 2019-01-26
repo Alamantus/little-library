@@ -49,8 +49,11 @@ module.exports = function (app) {
         id,
         title: bookData.title,
         author: bookData.author,
-        thickness: fileDetails.size > (maxSize * 0.3) ? 'is-thick' : (fileDetails.size < (maxSize * 0.6) ? 'is-thin' : ''),
-        tallness: bookData.title.length > 15 ? 'is-tall' : (bookData.title.length < 8 ? 'is-short' : ''),
+        thickness: (fileDetails.size > (maxSize * 0.3)) || (bookData.title.length > 28)
+          ? 'is-thick' : (fileDetails.size < (maxSize * 0.6) ? 'is-thin' : ''),
+        tallness: bookData.title.length > 16 ? 'is-tall' : (bookData.title.length < 8 ? 'is-short' : ''),
+        spineColor: '#ff0000',
+        textColor: '#ffffff',
         fileType: bookData.fileType,
         modal,
       });
