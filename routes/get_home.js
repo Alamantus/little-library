@@ -8,6 +8,7 @@ const settings = require('../settings.json');
 
 module.exports = function (app) {
   app.server.get('/', (req, res) => {
+    const useReadable = req.cookies['useReadable'] === 'yes';
     const files = fs.readdirSync(app.fileLocation).filter(fileName => fileName.includes('.json'))
       .map(fileName => {  // Cache the file data so sorting doesn't need to re-check each file
         const stats = fs.statSync(path.resolve(app.fileLocation, fileName));
@@ -50,7 +51,7 @@ module.exports = function (app) {
       if (!spineColor.isValid()) {
         spineColor = tinycolor.random();
       }
-      return app.templater.fill('./templates/elements/book.html', {
+      return app.templater.fill(useReadable ? './templates/elements/book_readable.html' : './templates/elements/book.html', {
         id,
         title: bookData.title,
         author: bookData.author,
@@ -68,7 +69,11 @@ module.exports = function (app) {
       books = '<div class="column"><div class="content">The shelf is empty. Would you like to <a href="/give">add a book</a>?</div></div>';
     }
 
-    const body = '<h2 class="title">Available Books</h2><div class="bookshelf columns is-gapless is-multiline is-mobile">' + books + '</div>';
+    const body = '<h2 class="title is-inline">Available Books</h2>'
+      + '<a id="readableToggle" class="button is-pulled-right">' + (!useReadable ? 'Make it readable' : 'Make it look cool') + '</a>'
+      + '<div class="columns is-multiline' + (!useReadable ? ' is-gapless is-mobile bookshelf' : '') + '" style="margin-top:5px;">'
+        + books
+      + '</div>';
     const html = app.templater.fill('./templates/htmlContainer.html', {
       title: 'View',
       resourcePath: (req.url.substr(-1) === '/' ? '../' : './'),
