@@ -33,6 +33,12 @@ $(document).ready(function() {
     }
   });
 
+  $('#readableToggle').click(function() {
+    var useReadable = getCookieValue('useReadable');
+    document.cookie = 'useReadable=' + (useReadable !== 'yes' ? 'yes' : 'no');
+    window.location.reload();
+  });
+
   $('.modal-background, .modal-close, .modal-card-head .delete, .modal .close').click(function() {
     $(this).closest('.modal').removeClass('is-active');
     downloadButton = undefined;
@@ -65,3 +71,8 @@ $(document).ready(function() {
     $('#bookFileName').text(fileName ? fileName : 'None Selected');
   });
 });
+
+function getCookieValue(key) {
+  var matches = document.cookie.match('(^|;)\\s*' + key + '\\s*=\\s*([^;]+)');
+  return matches ? matches.pop() : ''
+}

@@ -2,6 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const express = require('express');
 const helmet = require('helmet');
+const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
 
@@ -9,6 +10,8 @@ const settings = require('../settings.json');
 
 module.exports = function (app) {
   app.server.use(helmet());
+  
+  app.server.use(cookieParser());
 
   app.server.use(bodyParser.json()); // support json encoded bodies
   app.server.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies

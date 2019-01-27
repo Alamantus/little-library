@@ -1,6 +1,8 @@
 const path = require('path');
 const fs = require('fs');
 
+const settings = require('../settings.json');
+
 module.exports = function (app) {
   app.server.get('/tools', (req, res) => {
     if (req.query.pass === settings.toolsPassword) {

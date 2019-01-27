@@ -12,6 +12,7 @@
   "dependencies": {
     "body-parser": "^1.18.3",
     "bulma": "^0.7.2",
+    "cookie-parser": "^1.4.3",
     "express": "^4.16.4",
     "express-fileupload": "^1.0.0",
     "fecha": "^3.0.2",
@@ -23,6 +24,7 @@
     "socket.io": "^2.2.0",
     "socket.io-client": "^2.2.0",
     "striptags": "^3.1.1",
+    "tinycolor2": "^1.4.1",
     "unused-filename": "^1.0.0"
   }
 }
