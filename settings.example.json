@@ -10,6 +10,7 @@
   "allowedFormats": [".epub", ".mobi", ".pdf"],
   "toolsPassword": "password",
   "hideVisitors": false,
+  "sslPort": 443,
   "sslPrivateKey": null,
   "sslCertificate": null,
   "sslCertificateAuthority": null,
