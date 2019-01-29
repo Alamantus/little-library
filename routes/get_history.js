@@ -30,7 +30,7 @@ module.exports = function (app) {
         }),
         footer: '<a class="button close">Close</a>',
       });
-      return app.templater.fill('./templates/elements/book.html', {
+      return app.templater.fill('./templates/elements/book_readable.html', {
         id,
         title: bookData.title,
         author: bookData.author,
