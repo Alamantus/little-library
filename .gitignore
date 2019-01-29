@@ -8,3 +8,4 @@ public/history/*.json
 .well-known/
 
 settings.json
+customHtmlAfterFooter.html
