@@ -230,8 +230,8 @@ Server.prototype.start = function () {
     console.log('Started server on port ' + (process.env.PORT || settings.port));
   });
   if (this.https) {
-    this.https.listen(443, () => {
-      console.log('Started SSL server on port 443');
+    this.https.listen(settings.sslPort, () => {
+      console.log('Started SSL server on port ' + settings.sslPort);
     });
   }
 }

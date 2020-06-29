@@ -26,6 +26,11 @@ module.exports = class {
         .replace(/\{\{allowedFormats\}\}/g, settings.allowedFormats.join(','))
         .replace(/\{\{maxFileSize\}\}/g, (settings.maxFileSize > 0 ? settings.maxFileSize + 'MB' : 'no'));
 
+      if (fs.existsSync(path.resolve('./customHtmlAfterFooter.html'))) {
+        const customHtmlAfterFooter = fs.readFileSync(path.resolve('./customHtmlAfterFooter.html'));
+        filledTemplate = filledTemplate.replace(/\{\{customHtmlAfterFooter\}\}/g, customHtmlAfterFooter);
+      }
+
       for (let templateVar in templateVars) {
         const regExp = new RegExp('\{\{' + templateVar + '\}\}', 'g')
         filledTemplate = filledTemplate.replace(regExp, templateVars[templateVar]);
