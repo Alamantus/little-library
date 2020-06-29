@@ -9,23 +9,13 @@ const settings = require('../settings.json');
 module.exports = function (app) {
   app.server.get('/', (req, res) => {
     const useReadable = req.cookies['useReadable'] === 'yes';
-    const files = fs.readdirSync(app.fileLocation).filter(fileName => fileName.includes('.json'))
-      .map(fileName => {  // Cache the file data so sorting doesn't need to re-check each file
-        const stats = fs.statSync(path.resolve(app.fileLocation, fileName));
-        return {
-          name: fileName,
-          size: stats.size / (1000 * 1000),
-          time: stats.mtime.getTime(),
-        };
-      }).sort((a, b) => a.time - b.time);  // Sort from oldest to newest.
 
-    let books = files.map(fileDetails => {
-      const bookData = JSON.parse(fs.readFileSync(path.resolve(app.fileLocation, fileDetails.name), 'utf8'));
+    let books = app.shelfCache.map(bookData => {
       if (bookData.hasOwnProperty('fileName')) return '';
       bookData.author = bookData.author ? bookData.author : '<em>author not provided</em>';
       bookData.contributor = bookData.contributor ? bookData.contributor : 'Anonymous';
 
-      const id = fileDetails.name.replace('.json', '');
+      const id = bookData.name.replace('.json', '');
       const confirmId = 'confirm_' + id;
       const added = fecha.format(new Date(bookData.added), 'hh:mm:ssA on dddd MMMM Do, YYYY');
       const modal = app.templater.fill('./templates/elements/modalCard.html', {
@@ -55,8 +45,8 @@ module.exports = function (app) {
         id,
         title: bookData.title,
         author: bookData.author,
-        thickness: (fileDetails.size > (maxSize * 0.3)) || (bookData.title.length > 28)
-          ? 'is-thick' : (fileDetails.size < (maxSize * 0.6) ? 'is-thin' : ''),
+        thickness: (bookData.size > (maxSize * 0.3)) || (bookData.title.length > 28)
+          ? 'is-thick' : (bookData.size < (maxSize * 0.6) ? 'is-thin' : ''),
         tallness: bookData.title.length > 16 ? 'is-tall' : (bookData.title.length < 8 ? 'is-short' : ''),
         spineColor: spineColor.toString(),
         textColor: spineColor.isLight() ? '#000000' : '#ffffff',

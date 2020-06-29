@@ -35,6 +35,9 @@ function Server () {
   this.connections = 0;
   this.takenBooks = [];
 
+  this.shelfCache = [];
+  this.historyCache = [];
+
   require('./routes/middleware')(this);
   
   require('./routes/get_home')(this);
@@ -72,6 +75,44 @@ Server.prototype.replaceBodyWithTooManyBooksWarning = function (body) {
   return body;
 }
 
+Server.prototype.filterJSON = fileName => fileName.includes('.json');
+Server.prototype.mapBookData = (folderPath, fileDetails) => { // Get book info from file data
+  const fileData = JSON.parse(fs.readFileSync(path.resolve(folderPath, fileDetails.name), 'utf8'));
+  return {
+    ...fileDetails,
+    ...fileData,
+  };
+};
+
+Server.prototype.getShelfData = function () {
+  return fs.readdirSync(this.fileLocation).filter(this.filterJSON)
+    .map(fileName => {  // Cache the file data so sorting doesn't need to re-check each file
+      const stats = fs.statSync(path.resolve(this.fileLocation, fileName));
+      return {
+        name: fileName,
+        size: stats.size / (1000 * 1000),
+        time: stats.mtime.getTime(),
+      };
+    }).sort((a, b) => a.time - b.time)  // Sort from oldest to newest.
+    .map((fileDetails) => this.mapBookData(this.fileLocation, fileDetails));
+}
+
+Server.prototype.getHistoryData = function () {
+  return fs.readdirSync(this.historyLocation).filter(this.filterJSON)
+    .map(fileName => {  // Cache the file data so sorting doesn't need to re-check each file
+      return {
+        name: fileName,
+        time: fs.statSync(path.resolve(this.historyLocation, fileName)).mtime.getTime()
+      };
+    }).sort((a, b) => b.time - a.time)  // Sort from newest to oldest.
+    .map((fileDetails) => this.mapBookData(this.historyLocation, fileDetails));
+}
+
+Server.prototype.populateCaches = function () {
+  this.shelfCache = this.getShelfData();
+  this.historyCache = this.getHistoryData();
+}
+
 Server.prototype.addBook = function (uploadData = {}, success = () => {}, error = () => {}) {
   const { book } = uploadData;
 
@@ -94,6 +135,7 @@ Server.prototype.addBook = function (uploadData = {}, success = () => {}, error 
   }
 
   const bookFilePath = unusedFilename.sync(path.resolve(bookPath + bookData.fileType));
+  const self = this;
   return book.mv(bookFilePath, function (err) {
     if (err) {
       console.log(err);
@@ -101,6 +143,7 @@ Server.prototype.addBook = function (uploadData = {}, success = () => {}, error 
     } else {
       const bookDataPath = unusedFilename.sync(path.resolve(bookPath + '.json'));
       fs.writeFileSync(bookDataPath, JSON.stringify(bookData));
+      self.shelfCache = self.getShelfData();
       success();
       // console.log('uploaded ' + bookData.title + ' to ' + bookFilePath + ', and saved metadata to ' + bookDataPath);
     }
@@ -150,6 +193,7 @@ Server.prototype.deleteBooks = function (socketId) {
     }
   });
   this.takenBooks = this.takenBooks.filter(data => data.socketId === socketId);
+  this.populateCaches();
 }
 
 Server.prototype.removeHistoryBeyondLimit = function () {
@@ -194,3 +238,4 @@ Server.prototype.start = function () {
 
 const server = new Server();
 server.start();
+server.populateCaches();
