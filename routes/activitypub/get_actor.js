@@ -13,6 +13,7 @@ module.exports = function (app) {
       preferredUsername: 'shelf',
       inbox: `https://${settings.domain}/activitypub/inbox`,
       outbox: `https://${settings.domain}/activitypub/outbox`,
+      followers: `https://${settings.domain}/activitypub/followers`,
 
       publicKey: {
         id: `https://${settings.domain}/activitypub/actor#main-key`,
