@@ -133,8 +133,9 @@ Server.prototype.addBook = function (uploadData = {}, success = () => {}, error 
     author: striptags(uploadData.author.trim()),
     summary: striptags(uploadData.summary.trim().replace(/\r\n/g, '\n')),
     contributor: striptags(uploadData.contributor.trim()),
+    source: striptags(uploadData.source.trim()),
     added: Date.now(),
-    fileType: book.name.substr(book.name.lastIndexOf('.')),
+    fileType: uploadData.fileType,
   }
 
   const bookFilePath = unusedFilename.sync(path.resolve(bookPath + bookData.fileType));

@@ -14,6 +14,7 @@ module.exports = function (app) {
       if (bookData.hasOwnProperty('fileName')) return '';
       bookData.author = bookData.author ? bookData.author : '<em>author not provided</em>';
       bookData.contributor = bookData.contributor ? bookData.contributor : 'Anonymous';
+      bookData.source = bookData.source ? `<p class="is-italic"><small>Originally retrieved from ${bookData.source}</small></p>` : '';
 
       const id = bookData.name.replace('.json', '');
       const confirmId = 'confirm_' + id;
@@ -23,6 +24,7 @@ module.exports = function (app) {
         header: '<h2 class="title">' + bookData.title + '</h2><h4 class="subtitle">' + bookData.author + '</h4>',
         content: app.templater.fill('./templates/elements/bookInfo.html', {
           contributor: bookData.contributor,
+          source: bookData.source,
           fileFormat: bookData.fileType,
           added,
           summary: snarkdown(bookData.summary),

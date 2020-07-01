@@ -8,7 +8,9 @@ module.exports = function (app) {
     let history = app.historyCache.map(bookData => {
       bookData.author = bookData.author ? bookData.author : '<em>author not provided</em>';
       bookData.contributor = bookData.contributor ? bookData.contributor : 'Anonymous';
-      const id = bookData.name.replace('.json', '');
+      bookData.source = bookData.source ? `<p class="is-italic"><small>Originally retrieved from ${bookData.source}</small></p>` : '';
+      
+      const id = fileName.replace('.json', '');
       const added = fecha.format(new Date(bookData.added), 'hh:mm:ssA on dddd MMMM Do, YYYY');
       const removed = fecha.format(new Date(parseInt(id)), 'hh:mm:ssA on dddd MMMM Do, YYYY');
       const removedTag = '<div class="control"><div class="tags has-addons"><span class="tag">Taken</span><span class="tag is-warning">' + removed + '</span></div></div>';
@@ -17,6 +19,7 @@ module.exports = function (app) {
         header: '<h2 class="title">' + bookData.title + '</h2><h4 class="subtitle">' + bookData.author + '</h4>',
         content: app.templater.fill('./templates/elements/bookInfo.html', {
           contributor: bookData.contributor,
+          source: bookData.source,
           fileFormat: bookData.fileType,
           added,
           removedTag,
