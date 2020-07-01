@@ -14,6 +14,8 @@ module.exports = function (app) {
       const bookData = JSON.parse(fs.readFileSync(path.resolve(app.historyLocation, fileName), 'utf8'));
       bookData.author = bookData.author ? bookData.author : '<em>author not provided</em>';
       bookData.contributor = bookData.contributor ? bookData.contributor : 'Anonymous';
+      bookData.source = bookData.source ? `<p class="is-italic"><small>Originally retrieved from ${bookData.source}</small></p>` : '';
+      
       const id = fileName.replace('.json', '');
       const added = fecha.format(new Date(bookData.added), 'hh:mm:ssA on dddd MMMM Do, YYYY');
       const removed = fecha.format(new Date(parseInt(id)), 'hh:mm:ssA on dddd MMMM Do, YYYY');
@@ -23,6 +25,7 @@ module.exports = function (app) {
         header: '<h2 class="title">' + bookData.title + '</h2><h4 class="subtitle">' + bookData.author + '</h4>',
         content: app.templater.fill('./templates/elements/bookInfo.html', {
           contributor: bookData.contributor,
+          source: bookData.source,
           fileFormat: bookData.fileType,
           added,
           removedTag,
