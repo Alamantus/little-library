@@ -58,6 +58,7 @@ function Server () {
     require('./routes/activitypub/get_webfinger')(this);
     require('./routes/activitypub/get_actor')(this);
     require('./routes/activitypub/get_outbox')(this);
+    require('./routes/activitypub/get_item')(this);
     require('./routes/activitypub/post_inbox')(this);
     require('./routes/activitypub/get_followers')(this);
   }
