@@ -10,6 +10,7 @@ module.exports = function (app) {
     console.log(req.body);
     if (req.body.type === 'Follow') {
       if (typeof req.body.actor === 'string') {
+        let result;
         https.get(req.body.actor, (response) => { // https://attacomsian.com/blog/node-make-http-requests
           let data = '';
 
@@ -20,7 +21,8 @@ module.exports = function (app) {
 
           // called when the complete response is received.
           response.on('end', () => {
-            console.log(JSON.parse(data));
+            result = JSON.parse(data);
+            console.log(result);
           });
 
         }).on("error", (error) => {

@@ -49,12 +49,21 @@ module.exports = function (app) {
         }
         const published = fecha.format(new Date(bookData.date), 'isoDateTime');
         return {
+          '@context': 'https://www.w3.org/ns/activitystreams',
           id: `https://${settings.domain}/activitypub/${bookData.date}`,
-          type: 'Note',
-          published,
-          attributedTo: `https://${settings.domain}/activitypub/actor`,
-          content,
-          to: 'https://www.w3.org/ns/activitystreams#Public',
+          type: 'Create',
+          actor: `https://${settings.domain}/activitypub/actor`,
+          object: {
+            id: `https://${settings.domain}/activitypub/${bookData.date}`,
+            type: 'Note',
+            published,
+            attributedTo: `https://${settings.domain}/activitypub/actor`,
+            content,
+            to: [
+              `https://${settings.domain}/activitypub/followers`,
+              'https://www.w3.org/ns/activitystreams#Public',
+            ],
+          },
         };
       }),
     });
