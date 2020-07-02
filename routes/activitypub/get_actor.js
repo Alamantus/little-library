@@ -18,7 +18,7 @@ module.exports = function (app) {
       publicKey: {
         id: `https://${settings.domain}/activitypub/actor#main-key`,
         owner: `https://${settings.domain}/activitypub/actor`,
-        publicKeyPem: settings.publicKey,
+        publicKeyPem: app.publicKey,
       }
     });
 

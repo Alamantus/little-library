@@ -61,6 +61,31 @@ function Server () {
     require('./routes/activitypub/get_item')(this);
     require('./routes/activitypub/post_inbox')(this);
     require('./routes/activitypub/get_followers')(this);
+
+    if (!fs.existsSync(path.resolve('./publickey.pem')) || !fs.existsSync(path.resolve('./privatekey.pem'))) {
+      // https://stackoverflow.com/a/53173811
+      const { generateKeyPairSync } = require('crypto');
+      const { publicKey, privateKey } = generateKeyPairSync('rsa', {
+        modulusLength: 2048,  // the length of your key in bits
+        publicKeyEncoding: {
+          type: 'spki',       // recommended to be 'spki' by the Node.js docs
+          format: 'pem'
+        },
+        privateKeyEncoding: {
+          type: 'pkcs8',      // recommended to be 'pkcs8' by the Node.js docs
+          format: 'pem',
+          cipher: 'aes-256-cbc',   // *optional*
+          passphrase: 'top secret' // *optional*
+        }
+      });
+      this.publicKey = publicKey;
+      this.privateKey = privateKey;
+      fs.writeFileSync(path.resolve('./publickey.pem'), publicKey);
+      fs.writeFileSync(path.resolve('./privatekey.pem'), privateKey);
+    } else {
+      this.publicKey = fs.readFileSync(path.resolve('./publickey.pem'));
+      this.privateKey = fs.readFileSync(path.resolve('./privatekey.pem'));
+    }
   }
 }
 
