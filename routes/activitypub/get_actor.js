@@ -11,6 +11,8 @@ module.exports = function (app) {
       id: `https://${settings.domain}/activitypub/actor`,
       type: 'Person',
       preferredUsername: 'shelf',
+      name: settings.siteTitle,
+      url: `https://${settings.domain}/activitypub/actor`,
       inbox: `https://${settings.domain}/activitypub/inbox`,
       outbox: `https://${settings.domain}/activitypub/outbox`,
       followers: `https://${settings.domain}/activitypub/followers`,
