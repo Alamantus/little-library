@@ -16,5 +16,6 @@
   "sslCertificateAuthority": null,
   "forceHTTPS": false,
   "federate": true,
-  "domain": "localhost"
+  "domain": "localhost",
+  "pkPassphrase": "top secret"
 }

@@ -74,14 +74,15 @@ function Server () {
         privateKeyEncoding: {
           type: 'pkcs8',      // recommended to be 'pkcs8' by the Node.js docs
           format: 'pem',
-          cipher: 'aes-256-cbc',   // *optional*
-          passphrase: 'top secret' // *optional*
+          cipher: 'aes-256-cbc',
+          passphrase: settings.pkPassphrase,
         }
       });
       this.publicKey = publicKey;
       this.privateKey = privateKey;
       fs.writeFileSync(path.resolve('./publickey.pem'), publicKey);
       fs.writeFileSync(path.resolve('./privatekey.pem'), privateKey);
+      console.log('Created new public and private keys for federation: ./publickey.pem and ./privatekey.pem');
     } else {
       this.publicKey = fs.readFileSync(path.resolve('./publickey.pem'));
       this.privateKey = fs.readFileSync(path.resolve('./privatekey.pem'));
