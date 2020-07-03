@@ -5,7 +5,8 @@ const settings = require('../../settings.json');
 
 module.exports = function (app) {
   app.server.get('/activitypub/:id', function (req, res) {
-    let bookData = app.shelfCache.find(item => item.added === parseInt(req.params.id));
+    const bookId = parseInt(req.params.id.replace('create-', ''));
+    let bookData = app.shelfCache.find(item => item.added === bookId);
     if (!!bookData) {
       bookData = {
         title: bookData.title,
@@ -19,7 +20,7 @@ module.exports = function (app) {
     }
 
     if (!bookData) {
-      bookData = app.historyCache.find(item => item.time === parseInt(req.params.id) || item.added === parseInt(req.params.id));
+      bookData = app.historyCache.find(item => item.time === bookId || item.added === bookId);
       if (!!bookData) {
         bookData = {
           title: bookData.title,
@@ -47,7 +48,7 @@ module.exports = function (app) {
       content = `<p>The ${bookData.fileType} file of ${bookData.title} by ${bookData.author} (originally added by ${bookData.contributor}) has been removed from the shelf.</p>`;
     }
     const published = fecha.format(new Date(bookData.date), 'isoDateTime');
-    const item = JSON.stringify({
+    let item = {
       '@context': 'https://www.w3.org/ns/activitystreams',
       id: `https://${settings.domain}/activitypub/${bookData.date}`,
       type: 'Create',
@@ -63,9 +64,18 @@ module.exports = function (app) {
           'https://www.w3.org/ns/activitystreams#Public',
         ],
       }
-    });
+    };
+    if (res.params.id.indexOf('create-') >= 0) {
+      item = {
+        '@context': 'https://www.w3.org/ns/activitystreams',
+        id: `https://${settings.domain}/activitypub/create-${bookData.date}`,
+        type: 'Create',
+        actor: `https://${settings.domain}/activitypub/actor`,
+        object: JSON.parse(JSON.stringify(item)),
+      };
+    }
 
     res.setHeader('Content-Type', 'application/activity+json');
-    res.send(item);
+    res.send(JSON.stringify(item));
   });
 }

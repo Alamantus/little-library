@@ -50,7 +50,7 @@ module.exports = function (app) {
         const published = fecha.format(new Date(bookData.date), 'isoDateTime');
         return {
           '@context': 'https://www.w3.org/ns/activitystreams',
-          id: `https://${settings.domain}/activitypub/${bookData.date}`,
+          id: `https://${settings.domain}/activitypub/create-${bookData.date}`,
           type: 'Create',
           actor: `https://${settings.domain}/activitypub/actor`,
           object: {
