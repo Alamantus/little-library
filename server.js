@@ -88,8 +88,8 @@ function Server () {
       fs.writeFileSync(path.resolve('./privatekey.pem'), privateKey);
       console.log('Created new public and private keys for federation: ./publickey.pem and ./privatekey.pem');
     } else {
-      this.publicKey = fs.readFileSync(path.resolve('./publickey.pem'));
-      this.privateKey = fs.readFileSync(path.resolve('./privatekey.pem'));
+      this.publicKey = fs.readFileSync(path.resolve('./publickey.pem')).toString('utf-8');
+      this.privateKey = fs.readFileSync(path.resolve('./privatekey.pem')).toString('utf-8');
     }
   }
 }
