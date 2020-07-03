@@ -3,6 +3,9 @@ const fs = require('fs');
 const express = require('express');
 const http = require('http');
 const https = require('https');
+const crypto = require('crypto');
+
+const bodyParser = require('body-parser');
 const SocketIoServer = require('socket.io');
 const filenamify = require('filenamify');
 const unusedFilename = require('unused-filename');
@@ -17,6 +20,7 @@ const Templater = require('./templates/Templater');
 
 function Server () {
   this.server = express();
+  this.server.use(bodyParser.json({ type: 'application/activity+json' }));
   this.http = http.Server(this.server);
   this.https = privateKey && certificate ? https.createServer({ key: privateKey, cert: certificate, ca }, this.server) : null;
   this.io = new SocketIoServer();
@@ -254,6 +258,13 @@ Server.prototype.uuid4 = function () {
     var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
   });
+}
+
+Server.prototype.verifySignature = function (publicKey, signature, comparison) {
+  const verifier = crypto.createVerify('sha256');
+  verifier.update(comparison);
+  const pk = crypto.createPublicKey(publicKey);
+  return verifier.verify(pk, signature, 'base64');
 }
 
 Server.prototype.start = function () {

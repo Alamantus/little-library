@@ -13,8 +13,7 @@ A digital give-a-book, take-a-book library for ebooks.
 
 ### Requirements
 
-- [Node](https://nodejs.org) 8.14+
-- [Yarn](https://yarnpkg.com) 1.12+
+- [Node](https://nodejs.org) 10.0+
 
 ### Installation
 
