@@ -13,7 +13,7 @@ module.exports = function (app) {
   
   app.server.use(cookieParser());
 
-  app.server.use(bodyParser.json()); // support json encoded bodies
+  app.server.use(bodyParser.json({ type: 'application/activity+json' })); // support activity+json encoded bodies
   app.server.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
   app.server.use('/give', fileUpload({  // support file uploads

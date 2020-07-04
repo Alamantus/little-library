@@ -20,7 +20,6 @@ const Templater = require('./templates/Templater');
 
 function Server () {
   this.server = express();
-  this.server.use(bodyParser.json({ type: 'application/activity+json' }));
   this.http = http.Server(this.server);
   this.https = privateKey && certificate ? https.createServer({ key: privateKey, cert: certificate, ca }, this.server) : null;
   this.io = new SocketIoServer();
