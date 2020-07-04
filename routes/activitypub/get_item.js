@@ -66,6 +66,7 @@ module.exports = function (app) {
       ],
       attachment: [],
       tag: [],
+      replies: [],
     };
     if (req.params.id.indexOf('create-') >= 0) {
       item = {
