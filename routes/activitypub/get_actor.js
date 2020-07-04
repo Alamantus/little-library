@@ -27,10 +27,15 @@ module.exports = function (app) {
         publicKeyPem: app.publicKey,
       },
 
-      "icon": {
-        "type": "Image",
-        "mediaType": "image/png",
-        "url": "https://fedidb.org/static/ec/avatar.png"
+      icon: {
+        type: 'Image',
+        mediaType: 'image/png',
+        url: `https://${settings.domain}/images/icon.png`,
+      },
+      image: {
+        type: 'Image',
+        mediaType: 'image/png',
+        url: `https://${settings.domain}/images/logo.png`,
       }
     });
 
