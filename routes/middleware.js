@@ -24,6 +24,7 @@ module.exports = function (app) {
   app.server.use('/tools', fileUpload()); // Allow file upload on backup with no limits.
 
   app.server.use('/files', express.static(path.resolve('./public/files/')));
+  app.server.use('/images', express.static(path.resolve('./public/images/')));
   app.server.use('/css', express.static(path.resolve('./node_modules/bulma/css/')));
   app.server.use('/css', express.static(path.resolve('./public/css/')));
   app.server.use('/js', express.static(path.resolve('./public/js/')));
