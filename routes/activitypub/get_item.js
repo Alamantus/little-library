@@ -51,17 +51,24 @@ module.exports = function (app) {
     let item = {
       id: `https://${settings.domain}/activitypub/${bookData.date}`,
       type: 'Note',
+      summary: null,
+      inReplyTo: null,
       published,
+      url: `https://${settings.domain}/activitypub/${bookData.date}`,
       attributedTo: `https://${settings.domain}/activitypub/actor`,
       content,
+      sensitive: false,
       to: [
-        `https://${settings.domain}/activitypub/followers`,
         'https://www.w3.org/ns/activitystreams#Public',
       ],
+      cc: [
+        `https://${settings.domain}/activitypub/followers`,
+      ],
+      attachment: [],
+      tag: [],
     };
     if (req.params.id.indexOf('create-') >= 0) {
       item = {
-        '@context': 'https://www.w3.org/ns/activitystreams',
         id: `https://${settings.domain}/activitypub/create-${bookData.date}`,
         type: 'Create',
         actor: `https://${settings.domain}/activitypub/actor`,
@@ -70,6 +77,9 @@ module.exports = function (app) {
     }
 
     res.setHeader('Content-Type', 'application/activity+json');
-    res.send(JSON.stringify(item));
+    res.send(JSON.stringify({
+      '@context': 'https://www.w3.org/ns/activitystreams',  // Ensure @context gets added
+      ...item,
+    }));
   });
 }

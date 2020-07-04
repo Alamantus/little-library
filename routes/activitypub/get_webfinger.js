@@ -4,6 +4,9 @@ module.exports = function (app) {
   app.server.get('/.well-known/webfinger', function (req, res) {
     const webfinger = JSON.stringify({
       subject: `acct:shelf@${settings.domain}`,
+      aliases: [
+        `https://${settings.domain}/activitypub/actor`,
+      ],
       links: [
         {
           rel: 'self',

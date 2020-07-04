@@ -56,13 +56,21 @@ module.exports = function (app) {
           object: {
             id: `https://${settings.domain}/activitypub/${bookData.date}`,
             type: 'Note',
+            summary: null,
+            inReplyTo: null,
             published,
+            url: `https://${settings.domain}/activitypub/${bookData.date}`,
             attributedTo: `https://${settings.domain}/activitypub/actor`,
             content,
+            sensitive: false,
             to: [
-              `https://${settings.domain}/activitypub/followers`,
               'https://www.w3.org/ns/activitystreams#Public',
             ],
+            cc: [
+              `https://${settings.domain}/activitypub/followers`,
+            ],
+            attachment: [],
+            tag: [],
           },
         };
       }),
