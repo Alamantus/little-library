@@ -16,7 +16,7 @@ module.exports = function (app) {
       ]
     });
 
-    res.setHeader('Content-Type', 'application/activity+json');
+    res.setHeader('Content-Type', 'application/json');
     res.send(webfinger);
   });
 }
