@@ -29,7 +29,11 @@ Navigate to the folder:
 > cd path/to/little-library
 ```
 
-Run `yarn` to install all the dependencies:
+Run `npm install` or `yarn` to install all the dependencies:
+
+```bash
+> npm install
+```
 
 ```bash
 > yarn
