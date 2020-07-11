@@ -33,7 +33,7 @@ module.exports = function (app) {
     const bookDetails = [
       ...addedBooks,
       ...historyBooks,
-    ].sort((a, b) => a.date - b.date);
+    ].sort((a, b) => b.date - a.date);
 
     const orderedItems = bookDetails.map(bookData => {
       bookData.author = bookData.author ? bookData.author : '<em>author not provided</em>';
@@ -58,6 +58,7 @@ module.exports = function (app) {
           url: `https://${settings.domain}/activitypub/${bookData.date}`,
           attributedTo: `https://${settings.domain}/activitypub/actor`,
           content,
+          contentMap: { en: content, },
           sensitive: false,
           to: [
             'https://www.w3.org/ns/activitystreams#Public',
@@ -73,7 +74,24 @@ module.exports = function (app) {
     });
     
     const outbox = {
-      '@context': 'https://www.w3.org/ns/activitystreams',
+      '@context': [
+        'https://www.w3.org/ns/activitystreams',
+        'https://w3id.org/security/v1',
+        {
+          sc: 'http://schema.org#',
+          Hashtag: 'as:Hashtag',
+          sensitive: 'as:sensitive',
+          commentsEnabled: 'sc:Boolean',
+          capabilities: {
+            announce: {
+              '@type': '@id',
+            },
+            like: {
+              '@type': '@id',
+            },
+          },
+        },
+      ],
       id: `https://${settings.domain}/activitypub/outbox`,
       summary: 'Activities on ' + settings.siteTitle,
       type: 'OrderedCollection',

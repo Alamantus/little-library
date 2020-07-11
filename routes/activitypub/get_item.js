@@ -57,7 +57,9 @@ module.exports = function (app) {
       url: `https://${settings.domain}/activitypub/${bookData.date}`,
       attributedTo: `https://${settings.domain}/activitypub/actor`,
       content,
+      contentMap: { en: content, },
       sensitive: false,
+      commentsEnabled: false,
       to: [
         'https://www.w3.org/ns/activitystreams#Public',
       ],
@@ -79,7 +81,24 @@ module.exports = function (app) {
 
     res.setHeader('Content-Type', 'application/activity+json');
     res.send(JSON.stringify({
-      '@context': 'https://www.w3.org/ns/activitystreams',  // Ensure @context gets added
+      '@context': [
+        'https://www.w3.org/ns/activitystreams',  // Ensure @context gets added
+        'https://w3id.org/security/v1',
+        {
+          sc: 'http://schema.org#',
+          Hashtag: 'as:Hashtag',
+          sensitive: 'as:sensitive',
+          commentsEnabled: 'sc:Boolean',
+          capabilities: {
+            announce: {
+              '@type': '@id',
+            },
+            like: {
+              '@type': '@id',
+            },
+          },
+        },
+      ],
       ...item,
     }));
   });
