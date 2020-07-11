@@ -295,6 +295,23 @@ Server.prototype.verifySignature = function (publicKey, signature, comparison) {
   return verifier.verify(pk, signature, 'base64');
 }
 
+Server.prototype.createSignatureHeaders = function(targetHost) {
+  const UTCDateString = new Date().toUTCString();
+  const toSign = `(request-target): post /inbox\nhost: ${targetHost}\ndate: ${UTCDateString}`;
+  const signer = crypto.createSign('sha256');
+  signer.update(toSign);
+  const pk = crypto.createPrivateKey({
+    key: this.privateKey,
+    passphrase: settings.pkPassphrase,
+  });
+  const signature = signer.sign(pk, 'base64');
+  return {
+    'Host': targetHost,
+    'Date': UTCDateString,
+    'Signature': `keyId="https://${settings.domain}/activitypub/actor#main-key",headers="(request-target) host date",signature="${signature}"`
+  }
+}
+
 Server.prototype.start = function () {
   this.http.listen((process.env.PORT || settings.port), () => {
     console.log('Started server on port ' + (process.env.PORT || settings.port));

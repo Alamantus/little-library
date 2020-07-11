@@ -89,6 +89,7 @@ module.exports = function (app) {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/activity+json',
+                  ...app.createSignatureHeaders(followerUrl.hostname),
                 }
               }
               acceptRequest = https.request(options, (acceptResponse) => {
