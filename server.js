@@ -308,8 +308,8 @@ Server.prototype.createSignatureHeaders = function(targetHost) {
   return {
     'Host': targetHost,
     'Date': UTCDateString,
-    'Signature': `keyId="https://${settings.domain}/activitypub/actor#main-key",headers="(request-target) host date",signature="${signature}"`
-  }
+    'Signature': `keyId="https://${settings.domain}/activitypub/actor#main-key",headers="(request-target) host date",signature="${signature}"`,
+  };
 }
 
 Server.prototype.start = function () {

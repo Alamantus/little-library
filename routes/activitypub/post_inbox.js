@@ -75,12 +75,8 @@ module.exports = function (app) {
           select.get(actor.id, function (err, row) {
             if (err) return console.error(err);
             if (!row) {
-              const stmt = db.prepare('INSERT INTO followers VALUES (?, ?)');
-              stmt.run(actor.id, Date.now());
-              stmt.finalize();
-              app.followersCache.unshift(actor.id); // Put new follower at front of array
-              
               const followerUrl = new URL(actor.inbox);
+              const signatureHeaders = app.createSignatureHeaders(followerUrl.hostname);
               const options = {
                 protocol: followerUrl.protocol,
                 hostname: followerUrl.hostname,
@@ -88,8 +84,8 @@ module.exports = function (app) {
                 path: followerUrl.pathname,
                 method: 'POST',
                 headers: {
+                  ...signatureHeaders,
                   'Content-Type': 'application/activity+json',
-                  ...app.createSignatureHeaders(followerUrl.hostname),
                 }
               }
               acceptRequest = https.request(options, (acceptResponse) => {
@@ -103,6 +99,10 @@ module.exports = function (app) {
                 // called when the complete response is received.
                 acceptResponse.on('end', () => {
                   console.log(acceptData);
+                  const stmt = db.prepare('INSERT INTO followers VALUES (?, ?)');
+                  stmt.run(actor.id, Date.now());
+                  stmt.finalize();
+                  app.followersCache.unshift(actor.id); // Put new follower at front of array
                   res.status(200).end();
                 });
               }).on("error", (error) => {
