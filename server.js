@@ -5,7 +5,6 @@ const http = require('http');
 const https = require('https');
 const crypto = require('crypto');
 
-const bodyParser = require('body-parser');
 const SocketIoServer = require('socket.io');
 const filenamify = require('filenamify');
 const unusedFilename = require('unused-filename');
@@ -62,8 +61,8 @@ function Server () {
     require('./routes/activitypub/get_actor')(this);
     require('./routes/activitypub/get_outbox')(this);
     require('./routes/activitypub/get_item')(this);
-    require('./routes/activitypub/post_inbox')(this);
     require('./routes/activitypub/get_followers')(this);
+    require('./routes/activitypub/post_inbox')(this);
 
     if (!fs.existsSync(path.resolve('./publickey.pem')) || !fs.existsSync(path.resolve('./privatekey.pem'))) {
       // https://stackoverflow.com/a/53173811
@@ -106,14 +105,13 @@ function Server () {
       const db = new sqlite3.Database(path.resolve('./activitypub.db'));
 
       db.serialize(function () {
-        const select = db.prepare('SELECT actor FROM followers');
+        const select = db.prepare('SELECT actor FROM followers ORDER BY created DESC');
         select.all(function (err, rows) {
           if (err) return console.error(err);
           if (!rows) {
             console.log('no followers');
           } else {
             this.followersCache = rows.map(row => row.actor);
-            console.log(this.followersCache);
           }
         });
         select.finalize();

@@ -78,8 +78,7 @@ module.exports = function (app) {
               const stmt = db.prepare('INSERT INTO followers VALUES (?, ?)');
               stmt.run(actor.id, Date.now());
               stmt.finalize();
-              app.followersCache.push(actor.id);
-              console.log(app.followersCache);
+              app.followersCache.unshift(actor.id); // Put new follower at front of array
               
               const followerUrl = new URL(actor.inbox);
               const options = {
