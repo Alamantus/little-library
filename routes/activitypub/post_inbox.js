@@ -1,21 +1,18 @@
 const https = require('https');
-const crypto = require('crypto');
-
-const fecha = require('fecha');
-const md = require('snarkdown');
+const path = require('path');
 
 const settings = require('../../settings.json');
 
 module.exports = function (app) {
   app.server.post('/activitypub/inbox', function (req, res) {
-    if (req.body.type !== 'Follow') {
+    if (req.body.type !== 'Follow' || req.body.object !== `https://${settings.domain}/activitypub/actor`) {
       // Only accept follow requests
       return res.status(403).end();
     }
     
     if (typeof (req.headers.signature) === 'undefined') {
       // Deny any requests missing a signature
-      return res.status(403).end();
+      return res.status(403).send('Request not signed');
     }
 
     const signatureHeader = {};
@@ -29,7 +26,7 @@ module.exports = function (app) {
       || typeof (signatureHeader.headers) === 'undefined'
       || typeof (signatureHeader.signature) === 'undefined') {
       // Deny any invalid Signature header
-      return res.status(403).end();
+      return res.status(403).send('Request not signed');
     }
 
     // Get the signature
@@ -55,9 +52,6 @@ module.exports = function (app) {
       }
     }
     
-    console.log('follow headers:', req.headers);
-    console.log('follow body:', req.body);
-    
     res.setHeader('Content-Type', 'application/activity+json');
     const actorRequest = https.request(options, (actorResponse) => { // https://attacomsian.com/blog/node-make-http-requests
       let actorData = '';
@@ -74,52 +68,68 @@ module.exports = function (app) {
 
         const isVerified = app.verifySignature(publicKeyPem, signature, comparisonString);
         if (isVerified) {
-          return res.status(405).send({  // Temporary failure for testing only!
-            message: 'success',
-          });
+          const sqlite3 = require('sqlite3').verbose();
+          const db = new sqlite3.Database(path.resolve('./activitypub.db'));
 
-          const followerUrl = new URL(actor.inbox);
-          const options = {
-            protocol: followerUrl.protocol,
-            hostname: followerUrl.hostname,
-            port: followerUrl.port,
-            path: followerUrl.pathname,
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/activity+json',
+          const select = db.prepare('SELECT actor FROM followers WHERE actor=?');
+          select.get(actor.id, function (err, row) {
+            if (err) return console.error(err);
+            if (!row) {
+              const stmt = db.prepare('INSERT INTO followers VALUES (?, ?)');
+              stmt.run(actor.id, Date.now());
+              stmt.finalize();
+              app.followersCache.push(actor.id);
+              console.log(app.followersCache);
+              
+              const followerUrl = new URL(actor.inbox);
+              const options = {
+                protocol: followerUrl.protocol,
+                hostname: followerUrl.hostname,
+                port: followerUrl.port,
+                path: followerUrl.pathname,
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/activity+json',
+                }
+              }
+              acceptRequest = https.request(options, (acceptResponse) => {
+                let acceptData = '';
+
+                // called when a data chunk is received.
+                acceptResponse.on('data', (chunk) => {
+                  acceptData += chunk;
+                });
+
+                // called when the complete response is received.
+                acceptResponse.on('end', () => {
+                  console.log(acceptData);
+                  res.status(200).end();
+                });
+              }).on("error", (error) => {
+                console.error("Error: ", error);
+                res.status(500).send({
+                  message: 'Something went wrong.',
+                });
+              });
+
+              acceptRequest.write(JSON.stringify({
+                '@context': 'https://www.w3.org/ns/activitystreams',
+                summary: `${settings.siteTitle} accepted a Follow request`,
+                type: 'Accept',
+                actor: `https://${settings.domain}/activitypub/actor`,
+                object: req.body.object,
+              }));
+              acceptRequest.end();
+            } else {
+              console.log('Follower already exists');
+              res.status(403).end();
             }
-          }
-          acceptRequest = https.request(options, (acceptResponse) => {
-            let acceptData = '';
-
-            // called when a data chunk is received.
-            actorResponse.on('data', (chunk) => {
-              acceptData += chunk;
-            });
-
-            // called when the complete response is received.
-            actorResponse.on('end', () => {
-              console.log(acceptData);
-            });
-          }).on("error", (error) => {
-            console.error("Error: ", error);
-            res.status(500).send({
-              message: 'Something went wrong.',
-            });
           });
+          select.finalize();
 
-          // acceptRequest.write(JSON.stringify({
-          //   "@context": "https://www.w3.org/ns/activitystreams",
-          //   "summary": "Sally accepted an invitation to a party",
-          //   "type": "Accept",
-          //   "actor": `https://${settings.domain}/activitypub/actor`,
-          //   "object": req.body.object,
-          // }));
-          // acceptRequest.end();
+          db.close();
         } else {
-          res.status(403).send({
-            message: 'failure',
-          });
+          res.status(403).send('Invalid signature');
         }
       });
     }).on("error", (error) => {

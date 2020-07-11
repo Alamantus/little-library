@@ -10,3 +10,4 @@ public/history/*.json
 settings.json
 customHtmlAfterFooter.html
 *.pem
+*.db

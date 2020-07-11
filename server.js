@@ -90,6 +90,37 @@ function Server () {
       this.publicKey = fs.readFileSync(path.resolve('./publickey.pem')).toString('utf-8');
       this.privateKey = fs.readFileSync(path.resolve('./privatekey.pem')).toString('utf-8');
     }
+
+    this.followersCache = [];
+    const sqlite3 = require('sqlite3').verbose();
+    if (!fs.existsSync(path.resolve('./activitypub.db'))) {
+      var db = new sqlite3.Database(path.resolve('./activitypub.db'));
+
+      db.serialize(function () {
+        db.run("CREATE TABLE followers (actor TEXT UNIQUE, created INT)");
+        console.log('Created SQLite database');
+      });
+
+      db.close();
+    } else {
+      const db = new sqlite3.Database(path.resolve('./activitypub.db'));
+
+      db.serialize(function () {
+        const select = db.prepare('SELECT actor FROM followers');
+        select.all(function (err, rows) {
+          if (err) return console.error(err);
+          if (!rows) {
+            console.log('no followers');
+          } else {
+            this.followersCache = rows.map(row => row.actor);
+            console.log(this.followersCache);
+          }
+        });
+        select.finalize();
+      });
+
+      db.close();
+    }
   }
 }
 
