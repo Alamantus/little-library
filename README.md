@@ -13,7 +13,7 @@ A digital give-a-book, take-a-book library for ebooks.
 
 ### Requirements
 
-- [Node](https://nodejs.org) 8.14+
+- [Node](https://nodejs.org) 12+
 - [Yarn](https://yarnpkg.com) 1.12+
 
 ### Installation
@@ -59,7 +59,7 @@ Then copy `settings.example.json` to `settings.json` and make sure everything is
 }
 ```
 
-You can optionally copy the `customHtmlAfterFooter.example.html` to `customHtmlAfterFooter.html` if you want to add additional HTML to the bottom of the content container's body. This is useful for adding `<script>` snippets like what you get from [Fathom](https://github.com/usefathom/fathom) for analytics.
+You can optionally copy the `customHtmlAfterFooter.example.html` to `customHtmlAfterFooter.html` if you want to add additional HTML to the bottom of the content container's body. This is useful for adding `<script>` snippets like what you get from [umami](https://github.com/mikecao/umami) for analytics.
 
 ### Usage
 
@@ -83,4 +83,4 @@ This utility allows you to download a `.zip` file of all the ebook and history f
 
 ### Gotchas
 
-If you are using a proxy server like NginX, be sure your server is set to allow uploads equal to or higher than what you have specified in `maxFileSize`! In NginX, this amounts to adding `client_max_body_size 10M;` (or whatever your upload size is) to the `server` section of your `sites-enabled` entry!
+If you are using a proxy server like NginX (and you should), be sure your server is set to allow uploads equal to or higher than what you have specified in `maxFileSize`! In NginX, this amounts to adding `client_max_body_size 10M;` (or whatever your upload size is) to the `server` section of your `sites-enabled` entry!
