@@ -19,7 +19,7 @@ function Server () {
   this.server = express();
   this.http = http.Server(this.server);
   this.https = privateKey && certificate ? https.createServer({ key: privateKey, cert: certificate, ca }, this.server) : null;
-  this.io = new SocketIoServer();
+  this.io = SocketIoServer();
   if (!settings.forceHTTPS) {
     this.io.attach(this.http);
   }
