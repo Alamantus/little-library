@@ -10,6 +10,7 @@
   "author": "Robbie Antenesse <dev@alamantus.com>",
   "license": "MIT",
   "dependencies": {
+    "better-sqlite3": "^7.1.2",
     "body-parser": "^1.19.0",
     "bulma": "^0.7.5",
     "cookie-parser": "^1.4.5",
@@ -23,7 +24,6 @@
     "snarkdown": "^1.2.2",
     "socket.io": "^2.3.0",
     "socket.io-client": "^2.3.0",
-    "sqlite3": "^5.0.0",
     "striptags": "^3.1.1",
     "tinycolor2": "^1.4.1",
     "unused-filename": "^1.0.0"

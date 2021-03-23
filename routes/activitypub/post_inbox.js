@@ -68,64 +68,66 @@ module.exports = function (app) {
 
         const isVerified = app.verifySignature(publicKeyPem, signature, comparisonString);
         if (isVerified) {
-          const sqlite3 = require('sqlite3').verbose();
-          const db = new sqlite3.Database(path.resolve('./activitypub.db'));
+          const sqlite3 = require('better-sqlite3');
+          const db = new sqlite3(path.resolve('./activitypub.db'), {
+            verbose: settings.domain === 'localhost' ? console.log : null,
+          });
 
           const select = db.prepare('SELECT actor FROM followers WHERE actor=?');
-          select.get(actor.id, function (err, row) {
-            if (err) return console.error(err);
-            if (!row) {
-              const followerUrl = new URL(actor.inbox);
-              const signatureHeaders = app.createSignatureHeaders(followerUrl.hostname);
-              const options = {
-                protocol: followerUrl.protocol,
-                hostname: followerUrl.hostname,
-                port: followerUrl.port,
-                path: followerUrl.pathname,
-                method: 'POST',
-                headers: {
-                  ...signatureHeaders,
-                  'Content-Type': 'application/activity+json',
-                }
+          try {
+            const row = select.get(actor.id);
+          } catch (e) {
+            console.error(e);
+          }
+          if (!row) {
+            const followerUrl = new URL(actor.inbox);
+            const signatureHeaders = app.createSignatureHeaders(followerUrl.hostname);
+            const options = {
+              protocol: followerUrl.protocol,
+              hostname: followerUrl.hostname,
+              port: followerUrl.port,
+              path: followerUrl.pathname,
+              method: 'POST',
+              headers: {
+                ...signatureHeaders,
+                'Content-Type': 'application/activity+json',
               }
-              acceptRequest = https.request(options, (acceptResponse) => {
-                let acceptData = '';
+            }
+            acceptRequest = https.request(options, (acceptResponse) => {
+              let acceptData = '';
 
-                // called when a data chunk is received.
-                acceptResponse.on('data', (chunk) => {
-                  acceptData += chunk;
-                });
-
-                // called when the complete response is received.
-                acceptResponse.on('end', () => {
-                  console.log(acceptData);
-                  const stmt = db.prepare('INSERT INTO followers VALUES (?, ?)');
-                  stmt.run(actor.id, Date.now());
-                  stmt.finalize();
-                  app.followersCache.unshift(actor.id); // Put new follower at front of array
-                  res.status(200).end();
-                });
-              }).on("error", (error) => {
-                console.error("Error: ", error);
-                res.status(500).send({
-                  message: 'Something went wrong.',
-                });
+              // called when a data chunk is received.
+              acceptResponse.on('data', (chunk) => {
+                acceptData += chunk;
               });
 
-              acceptRequest.write(JSON.stringify({
-                '@context': 'https://www.w3.org/ns/activitystreams',
-                summary: `${settings.siteTitle} accepted a Follow request`,
-                type: 'Accept',
-                actor: `https://${settings.domain}/activitypub/actor`,
-                object: req.body.object,
-              }));
-              acceptRequest.end();
-            } else {
-              console.log('Follower already exists');
-              res.status(403).end();
-            }
-          });
-          select.finalize();
+              // called when the complete response is received.
+              acceptResponse.on('end', () => {
+                console.log(acceptData);
+                const stmt = db.prepare('INSERT INTO followers VALUES (?, ?)');
+                stmt.run(actor.id, Date.now());
+                app.followersCache.unshift(actor.id); // Put new follower at front of array
+                res.status(200).end();
+              });
+            }).on("error", (error) => {
+              console.error("Error: ", error);
+              res.status(500).send({
+                message: 'Something went wrong.',
+              });
+            });
+
+            acceptRequest.write(JSON.stringify({
+              '@context': 'https://www.w3.org/ns/activitystreams',
+              summary: `${settings.siteTitle} accepted a Follow request`,
+              type: 'Accept',
+              actor: `https://${settings.domain}/activitypub/actor`,
+              object: req.body.object,
+            }));
+            acceptRequest.end();
+          } else {
+            console.log('Follower already exists');
+            res.status(403).end();
+          }
 
           db.close();
         } else {

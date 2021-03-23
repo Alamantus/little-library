@@ -90,35 +90,16 @@ function Server () {
       this.privateKey = fs.readFileSync(path.resolve('./privatekey.pem')).toString('utf-8');
     }
 
-    this.followersCache = [];
-    const sqlite3 = require('sqlite3').verbose();
-    if (!fs.existsSync(path.resolve('./activitypub.db'))) {
-      var db = new sqlite3.Database(path.resolve('./activitypub.db'));
+    const sqlite3 = require('better-sqlite3');
+    const db = new sqlite3(path.resolve('./activitypub.db'), {
+      verbose: settings.domain === 'localhost' ? console.log : null,
+    });
+    db.prepare('CREATE TABLE IF NOT EXISTS followers (actor TEXT UNIQUE, created INT)').run();
 
-      db.serialize(function () {
-        db.run("CREATE TABLE followers (actor TEXT UNIQUE, created INT)");
-        console.log('Created SQLite database');
-      });
+    this.followersCache = db.prepare('SELECT actor FROM followers ORDER BY created DESC').all();
+    if (this.followersCache.length < 1) console.log('No followers!');
 
-      db.close();
-    } else {
-      const db = new sqlite3.Database(path.resolve('./activitypub.db'));
-
-      db.serialize(function () {
-        const select = db.prepare('SELECT actor FROM followers ORDER BY created DESC');
-        select.all(function (err, rows) {
-          if (err) return console.error(err);
-          if (!rows) {
-            console.log('no followers');
-          } else {
-            this.followersCache = rows.map(row => row.actor);
-          }
-        });
-        select.finalize();
-      });
-
-      db.close();
-    }
+    db.close();
   }
 }
 
