@@ -27,7 +27,7 @@ module.exports = function (app) {
   app.server.use('/css', express.static(path.resolve('./node_modules/bulma/css/')));
   app.server.use('/css', express.static(path.resolve('./public/css/')));
   app.server.use('/js', express.static(path.resolve('./public/js/')));
-  app.server.use('/js', express.static(path.resolve('./node_modules/jquery/dist/')));
+  app.server.use('/js', express.static(path.resolve('./node_modules/cash-dom/dist/')));
   app.server.use('/js', express.static(path.resolve('./node_modules/socket.io-client/dist/')));
 
   // If a `.well-known` directory exists, allow it to be used for things like Let's Encrypt challenges
