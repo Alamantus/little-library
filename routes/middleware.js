@@ -3,18 +3,23 @@ const fs = require('fs');
 const express = require('express');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
-const bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
 
 const settings = require('../settings.json');
 
 module.exports = function (app) {
-  app.server.use(helmet());
+  const directives = helmet.contentSecurityPolicy.getDefaultDirectives();
+  if (!(app.https && settings.forceHTTPS)) delete directives['upgrade-insecure-requests'];
+  app.server.use(helmet({
+    contentSecurityPolicy: {
+      directives,
+    },
+  }));
   
   app.server.use(cookieParser());
 
-  app.server.use(bodyParser.json({ type: 'application/activity+json' })); // support activity+json encoded bodies
-  app.server.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
+  app.server.use(express.json({ type: 'application/activity+json' })); // support activity+json encoded bodies
+  app.server.use(express.urlencoded({ extended: true })); // support encoded bodies
 
   app.server.use('/give', fileUpload({  // support file uploads
     limits: {
@@ -28,7 +33,7 @@ module.exports = function (app) {
   app.server.use('/css', express.static(path.resolve('./node_modules/bulma/css/')));
   app.server.use('/css', express.static(path.resolve('./public/css/')));
   app.server.use('/js', express.static(path.resolve('./public/js/')));
-  app.server.use('/js', express.static(path.resolve('./node_modules/jquery/dist/')));
+  app.server.use('/js', express.static(path.resolve('./node_modules/cash-dom/dist/')));
   app.server.use('/js', express.static(path.resolve('./node_modules/socket.io-client/dist/')));
 
   // If a `.well-known` directory exists, allow it to be used for things like Let's Encrypt challenges

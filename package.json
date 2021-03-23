@@ -12,20 +12,20 @@
   "dependencies": {
     "better-sqlite3": "^7.1.2",
     "body-parser": "^1.19.0",
-    "bulma": "^0.7.5",
+    "bulma": "^0.9.2",
+    "cash-dom": "^8.1.0",
     "cookie-parser": "^1.4.5",
     "express": "^4.17.1",
-    "express-fileupload": "^1.1.6",
+    "express-fileupload": "^1.2.1",
     "fecha": "^4.2.0",
-    "filenamify": "^2.1.0",
-    "helmet": "^3.23.3",
-    "jquery": "^3.5.1",
-    "onezip": "^3.1.2",
-    "snarkdown": "^1.2.2",
-    "socket.io": "^2.3.0",
-    "socket.io-client": "^2.3.0",
+    "filenamify": "^4.2.0",
+    "helmet": "^4.4.1",
+    "onezip": "^5.0.0",
+    "snarkdown": "^2.0.0",
+    "socket.io": "^4.0.0",
+    "socket.io-client": "^4.0.0",
     "striptags": "^3.1.1",
-    "tinycolor2": "^1.4.1",
-    "unused-filename": "^1.0.0"
+    "tinycolor2": "^1.4.2",
+    "unused-filename": "^2.1.0"
   }
 }

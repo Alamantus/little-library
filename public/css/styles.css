@@ -18,10 +18,10 @@
   margin: 10px 1px -4px !important;
 }
 .book-slot.is-thin {
-  width: 80px;
+  width: 80px !important;
 }
 .book-slot.is-thick {
-  width: 120px;
+  width: 120px !important;
 }
 
 .book {
