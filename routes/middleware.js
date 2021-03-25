@@ -30,11 +30,34 @@ module.exports = function (app) {
 
   app.server.use('/files', express.static(path.resolve('./public/files/')));
   app.server.use('/images', express.static(path.resolve('./public/images/')));
-  app.server.use('/css', express.static(path.resolve('./node_modules/bulma/css/')));
+  
+  app.server.get('/css/bulma.css', (req, res) => {
+    if (!app.bulmaFileCache) {
+      const bulmaPath = require.resolve('bulma/css/bulma.min.css');
+      app.bulmaFileCache = fs.readFileSync(bulmaPath).toString();
+    }
+    res.setHeader('Content-Type', 'text/css');
+    res.send(app.bulmaFileCache);
+  });
   app.server.use('/css', express.static(path.resolve('./public/css/')));
+
   app.server.use('/js', express.static(path.resolve('./public/js/')));
-  app.server.use('/js', express.static(path.resolve('./node_modules/cash-dom/dist/')));
-  app.server.use('/js', express.static(path.resolve('./node_modules/socket.io-client/dist/')));
+  app.server.get('/js/cash.js', (req, res) => {
+    if (!app.cashFileCache) {
+      const cashPath = require.resolve('cash-dom/dist/cash.min.js');
+      app.cashFileCache = fs.readFileSync(cashPath).toString();
+    }
+    res.setHeader('Content-Type', 'text/javascript');
+    res.send(app.cashFileCache);
+  });
+  app.server.get('/js/socket.io.js', (req, res) => {
+    if (!app.socketioFileCache) {
+      const socketioPath = require.resolve('socket.io-client/dist/socket.io.min.js');
+      app.socketioFileCache = fs.readFileSync(socketioPath).toString();
+    }
+    res.setHeader('Content-Type', 'text/javascript');
+    res.send(app.socketioFileCache);
+  });
 
   // If a `.well-known` directory exists, allow it to be used for things like Let's Encrypt challenges
   if (fs.existsSync(path.resolve('./.well-known'))) {
