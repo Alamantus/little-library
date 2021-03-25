@@ -7,6 +7,14 @@ public/files/*.zip
 public/history/*.json
 .well-known/
 
+.yarn/*
+!.yarn/cache
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
 settings.json
 customHtmlAfterFooter.html
 *.pem
