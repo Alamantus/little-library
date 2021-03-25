@@ -118,6 +118,7 @@ module.exports = function (app) {
 
             acceptRequest.write(JSON.stringify({
               '@context': 'https://www.w3.org/ns/activitystreams',
+              id: `https://${settings.domain}/activitypub/actor#accepts/follows/${actor.id}`,
               summary: `${settings.siteTitle} accepted a Follow request`,
               type: 'Accept',
               actor: `https://${settings.domain}/activitypub/actor`,
