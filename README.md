@@ -13,7 +13,12 @@ A digital give-a-book, take-a-book library for ebooks.
 
 ### Requirements
 
-- [Node](https://nodejs.org) 11.0+
+- [Node](https://nodejs.org) 12.0+
+
+#### Optional
+
+- [Yarn](https://yarnpkg.org) 2.0+
+  - Using Yarn instead of NPM is a lot faster because the dependencies are cached within the project and accessible via its ["Plug'n'Play" installation strategy](https://yarnpkg.com/features/pnp)!
 
 ### Installation
 
@@ -70,6 +75,12 @@ Run `npm start` to start the Little Library server:
 
 ```bash
 > npm start
+```
+
+Or if you're using Yarn, it's important you use this instead:
+
+```bash
+> yarn start
 ```
 
 Navigate to `localhost:3000` in your favorite browser to see the Little Library.
