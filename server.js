@@ -91,15 +91,20 @@ function Server () {
     }
 
     const sqlite3 = require('better-sqlite3');
-    const db = new sqlite3(path.resolve('./activitypub.db'), {
+    this.db = new sqlite3(path.resolve('./activitypub.db'), {
       verbose: settings.domain === 'localhost' ? console.log : null,
     });
-    db.prepare('CREATE TABLE IF NOT EXISTS followers (actor TEXT UNIQUE, created INT)').run();
+    this.db.prepare('CREATE TABLE IF NOT EXISTS followers (actor TEXT UNIQUE, created INT)').run();
+    this.db.prepare('CREATE TABLE IF NOT EXISTS send_queue (recipient TEXT, data TEXT, last_attempt INT, attempts INT)').run();
 
-    this.followersCache = db.prepare('SELECT actor FROM followers ORDER BY created DESC').all();
+    this.followersCache = this.db.prepare('SELECT actor FROM followers ORDER BY created DESC').all();
     if (this.followersCache.length < 1) console.log('No followers!');
 
-    db.close();
+    // Start send queue
+    var cron = require('node-cron');
+    var processQueue = require('./process-queue');
+    this.firstSendJob = cron.schedule('*/10 * * * *', () => processQueue.firstSend(this));  // Process first job that hasn't been run every 10 seconds
+    this.attemptResendJob = cron.schedule('* */2 * * *', () => processQueue.attemptResend(this));  // Process resend 2 minutes
   }
 }
 
@@ -307,3 +312,12 @@ Server.prototype.start = function () {
 const server = new Server();
 server.start();
 server.populateCaches();
+
+// Stop cron jobs when process ends
+if (settings.federate) {
+  require('node-cleanup')(function (exitCode, signal) {
+      server.firstSendJob.destroy();
+      server.attemptResendJob.destroy();
+      server.db.close();
+  });
+}

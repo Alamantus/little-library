@@ -34,7 +34,7 @@ module.exports = function (app) {
   app.server.get('/css/bulma.css', (req, res) => {
     if (!app.bulmaFileCache) {
       const bulmaPath = require.resolve('bulma/css/bulma.min.css');
-      app.bulmaFileCache = fs.readFileSync(bulmaPath).toString();
+      app.bulmaFileCache = fs.readFileSync(bulmaPath).toString('utf-8');
     }
     res.setHeader('Content-Type', 'text/css');
     res.send(app.bulmaFileCache);
@@ -45,7 +45,7 @@ module.exports = function (app) {
   app.server.get('/js/cash.js', (req, res) => {
     if (!app.cashFileCache) {
       const cashPath = require.resolve('cash-dom/dist/cash.min.js');
-      app.cashFileCache = fs.readFileSync(cashPath).toString();
+      app.cashFileCache = fs.readFileSync(cashPath).toString('utf-8');
     }
     res.setHeader('Content-Type', 'text/javascript');
     res.send(app.cashFileCache);
@@ -53,7 +53,7 @@ module.exports = function (app) {
   app.server.get('/js/socket.io.js', (req, res) => {
     if (!app.socketioFileCache) {
       const socketioPath = require.resolve('socket.io-client/dist/socket.io.min.js');
-      app.socketioFileCache = fs.readFileSync(socketioPath).toString();
+      app.socketioFileCache = fs.readFileSync(socketioPath).toString('utf-8');
     }
     res.setHeader('Content-Type', 'text/javascript');
     res.send(app.socketioFileCache);

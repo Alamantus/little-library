@@ -68,14 +68,10 @@ module.exports = function (app) {
 
         const isVerified = app.verifySignature(publicKeyPem, signature, comparisonString);
         if (isVerified) {
-          const sqlite3 = require('better-sqlite3');
-          const db = new sqlite3(path.resolve('./activitypub.db'), {
-            verbose: settings.domain === 'localhost' ? console.log : null,
-          });
-
-          const select = db.prepare('SELECT actor FROM followers WHERE actor=?');
+          let row;
           try {
-            const row = select.get(actor.id);
+            const select = app.db.prepare('SELECT actor FROM followers WHERE actor=?');
+            row = select.get(actor.id);
           } catch (e) {
             console.error(e);
           }
@@ -104,7 +100,7 @@ module.exports = function (app) {
               // called when the complete response is received.
               acceptResponse.on('end', () => {
                 console.log(acceptData);
-                const stmt = db.prepare('INSERT INTO followers VALUES (?, ?)');
+                const stmt = app.db.prepare('INSERT INTO followers VALUES (?, ?)');
                 stmt.run(actor.id, Date.now());
                 app.followersCache.unshift(actor.id); // Put new follower at front of array
                 res.status(200).end();
@@ -129,8 +125,6 @@ module.exports = function (app) {
             console.log('Follower already exists');
             res.status(403).end();
           }
-
-          db.close();
         } else {
           res.status(403).send('Invalid signature');
         }
