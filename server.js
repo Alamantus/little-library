@@ -9,6 +9,7 @@ const SocketIoServer = require('socket.io');
 const filenamify = require('filenamify');
 const unusedFilename = require('unused-filename');
 const striptags = require('striptags');
+const fecha = require('fecha');
 
 const settings = require('./settings.json');
 const privateKey = settings.sslPrivateKey ? fs.readFileSync(settings.sslPrivateKey, 'utf8') : null;
@@ -95,7 +96,7 @@ function Server () {
       verbose: settings.domain === 'localhost' ? console.log : null,
     });
     this.db.prepare('CREATE TABLE IF NOT EXISTS followers (actor TEXT UNIQUE, created INT)').run();
-    this.db.prepare('CREATE TABLE IF NOT EXISTS send_queue (recipient TEXT, data TEXT, last_attempt INT, attempts INT)').run();
+    this.db.prepare('CREATE TABLE IF NOT EXISTS send_queue (recipient TEXT, data TEXT, action TEXT, attempts INT, last_attempt INT)').run();
 
     this.followersCache = this.db.prepare('SELECT actor FROM followers ORDER BY created DESC').all();
     if (this.followersCache.length < 1) console.log('No followers!');
@@ -103,7 +104,7 @@ function Server () {
     // Start send queue
     var cron = require('node-cron');
     var processQueue = require('./process-queue');
-    this.firstSendJob = cron.schedule('*/10 * * * *', () => processQueue.firstSend(this));  // Process first job that hasn't been run every 10 seconds
+    this.firstSendJob = cron.schedule('* * * * *', () => processQueue.firstSend(this));  // Process first job that hasn't been run every 1 second
     this.attemptResendJob = cron.schedule('* */2 * * *', () => processQueue.attemptResend(this));  // Process resend 2 minutes
   }
 }
@@ -194,6 +195,19 @@ Server.prototype.addBook = function (uploadData = {}, success = () => {}, error 
       fs.writeFileSync(bookDataPath, JSON.stringify(bookData));
       self.shelfCache = self.getShelfData();
       success();
+
+      if (settings.federate && self.followersCache.length > 0) {
+        try{
+          const query = 'INSERT INTO send_queue (recipient, data, action, attempts, last_attempt) VALUES '
+            + self.followersCache.map(() => '(?, ?, ?, ?, ?)').join(', ');
+          const stmt = self.db.prepare(query);
+          const queueData = self.followersCache.map(follower => [follower, bookDataPath, 'added', 0, 0]);
+          stmt.run(queueData);
+          self.firstSendJob.start();
+        } catch (err) {
+          console.error('Could not queue', err);
+        }
+      }
       // console.log('uploaded ' + bookData.title + ' to ' + bookFilePath + ', and saved metadata to ' + bookDataPath);
     }
   });
@@ -295,6 +309,44 @@ Server.prototype.createSignatureHeaders = function(targetHost) {
     'Host': targetHost,
     'Date': UTCDateString,
     'Signature': `keyId="https://${settings.domain}/activitypub/actor#main-key",headers="(request-target) host date",signature="${signature}"`,
+  };
+}
+
+Server.prototype.createActivity = function(bookData) {
+  bookData.author = bookData.author ? bookData.author : '<em>author not provided</em>';
+  bookData.contributor = bookData.contributor ? bookData.contributor : 'Anonymous';
+  let content;
+  if (bookData.action === 'added') {
+    content = `<p>New ${bookData.fileType} added: ${bookData.title} by ${bookData.author}</p><p>When adding, ${bookData.contributor} commented:</p><p>${md(bookData.summary)}</p>`;
+  } else {
+    content = `<p>The ${bookData.fileType} file of ${bookData.title} by ${bookData.author} (originally added by ${bookData.contributor}) has been removed from the shelf.</p>`;
+  }
+  const published = fecha.format(new Date(bookData.date), 'isoDateTime');
+  return {
+    id: `https://${settings.domain}/activitypub/create-${bookData.date}`,
+    type: 'Create',
+    actor: `https://${settings.domain}/activitypub/actor`,
+    object: {
+      id: `https://${settings.domain}/activitypub/${bookData.date}`,
+      type: 'Note',
+      summary: null,
+      inReplyTo: null,
+      published,
+      url: `https://${settings.domain}/activitypub/${bookData.date}`,
+      attributedTo: `https://${settings.domain}/activitypub/actor`,
+      content,
+      contentMap: { en: content, },
+      sensitive: false,
+      to: [
+        'https://www.w3.org/ns/activitystreams#Public',
+      ],
+      cc: [
+        `https://${settings.domain}/activitypub/followers`,
+      ],
+      attachment: [],
+      tag: [],
+      replies: [],
+    },
   };
 }
 
