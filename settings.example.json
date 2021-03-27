@@ -17,5 +17,7 @@
   "forceHTTPS": false,
   "federate": true,
   "domain": "localhost",
-  "pkPassphrase": "top secret"
+  "pkPassphrase": "top secret",
+  "maxResendAttempts": 10,
+  "resendMinutesDelay": 2
 }

@@ -96,7 +96,7 @@ function Server () {
       verbose: settings.domain === 'localhost' ? console.log : null,
     });
     this.db.prepare('CREATE TABLE IF NOT EXISTS followers (actor TEXT UNIQUE, created INT)').run();
-    this.db.prepare('CREATE TABLE IF NOT EXISTS send_queue (recipient TEXT, data TEXT, action TEXT, attempts INT, last_attempt INT)').run();
+    this.db.prepare('CREATE TABLE IF NOT EXISTS send_queue (recipient TEXT, data TEXT, action TEXT, attempts INT, next_attempt INT)').run();
 
     this.followersCache = this.db.prepare('SELECT actor FROM followers ORDER BY created DESC').all();
     if (this.followersCache.length < 1) console.log('No followers!');
@@ -104,8 +104,7 @@ function Server () {
     // Start send queue
     var cron = require('node-cron');
     var processQueue = require('./process-queue');
-    this.firstSendJob = cron.schedule('* * * * *', () => processQueue.firstSend(this));  // Process first job that hasn't been run every 1 second
-    this.attemptResendJob = cron.schedule('* */2 * * *', () => processQueue.attemptResend(this));  // Process resend 2 minutes
+    this.sendJob = cron.schedule('* * * * *', () => processQueue(this));
   }
 }
 
@@ -198,10 +197,11 @@ Server.prototype.addBook = function (uploadData = {}, success = () => {}, error 
 
       if (settings.federate && self.followersCache.length > 0) {
         try{
-          const query = 'INSERT INTO send_queue (recipient, data, action, attempts, last_attempt) VALUES '
+          const query = 'INSERT INTO send_queue (recipient, data, action, attempts, next_attempt) VALUES '
             + self.followersCache.map(() => '(?, ?, ?, ?, ?)').join(', ');
           const stmt = self.db.prepare(query);
-          const queueData = self.followersCache.map(follower => [follower, bookDataPath, 'added', 0, 0]);
+          const queueData = self.followersCache.map(follower => [follower, bookDataPath, 'added', 0, 0])
+            .reduce((result, current) => [...result, ...current], []);
           stmt.run(queueData);
           self.firstSendJob.start();
         } catch (err) {
