@@ -3,7 +3,7 @@ const path = require('path');
 
 const settings = require('../../settings.json');
 
-function processFollow(app, actor, followObject) {
+function processFollow(app, actor, followObject, success = () => {}, error = () => {}) {
   let row;
   try {
     const select = app.db.prepare('SELECT actor FROM followers WHERE actor=?');
@@ -12,6 +12,7 @@ function processFollow(app, actor, followObject) {
     console.error(e);
   }
   if (!row) {
+    console.info('Sending Accept activity');
     app.sendActivity(actor.inbox, {
       '@context': 'https://www.w3.org/ns/activitystreams',
       id: `https://${settings.domain}/activitypub/actor#accepts/follows/${actor.id}`,
@@ -21,46 +22,53 @@ function processFollow(app, actor, followObject) {
       object: followObject,
     }, (response) => {
       console.log(response);
+      try {
         const stmt = app.db.prepare('INSERT INTO followers VALUES (?, ?)');
         stmt.run(actor.id, Date.now());
-        app.followersCache.add(actor.id);
-        res.status(200).end();
-    }, (error) => {
-      console.error("Error: ", error);
-      res.status(500).send({
-        message: 'Something went wrong.',
-      });
-    });
+      } catch (e) {
+        console.error('Could not add follower to database:\n', e);
+      }
+      app.followersCache.add(actor.id);
+      success();
+    }, (err) => error(err));
   } else {
-    console.log('Follower already exists');
-    res.status(403).end();
+    error('Follower already exists');
   }
 }
 
-function processUnFollow(app, actor) {
+function processUnFollow(app, actor, success = () => {}, error = () => {}) {
+  console.info('Removing follower:\n', actor);
   try {
     const removeFollower = app.db.prepare('DELETE FROM followers WHERE actor=?');
-    removeFollower.run(actor.id);
-    app.followersCache.delete(actor.id);
-    const removeJobs = app.db.prepare('DELETE FROM send_queue WHERE recipient=?');
-    removeJobs.run(actor.id);
+    const success = removeFollower.run(actor.id);
+    if (success.changes > 0) {
+      app.followersCache.delete(actor.id);
+      const removeJobs = app.db.prepare('DELETE FROM send_queue WHERE recipient=?');
+      removeJobs.run(actor.id);
+      success();
+    } else {
+      error('No rows removed');
+    }
   } catch (e) {
-    console.error(e);
+    error(e);
   }
 }
 
 module.exports = function (app) {
   app.server.post('/activitypub/inbox', function (req, res) {
+    console.info('Inbox request', req.body);
     if (req.body.type !== 'Follow'
       || (req.body.type === 'Undo' && req.body.object.type !== 'Follow')
       || req.body.object !== `https://${settings.domain}/activitypub/actor`
     ) {
       // Only accept follow requests
+      console.info('Rejecting: Not a follow or unfollow request');
       return res.status(403).end();
     }
     
     if (typeof (req.headers.signature) === 'undefined') {
       // Deny any requests missing a signature
+      console.info('Rejecting: No signature');
       return res.status(403).send('Request not signed');
     }
 
@@ -75,6 +83,7 @@ module.exports = function (app) {
       || typeof (signatureHeader.headers) === 'undefined'
       || typeof (signatureHeader.signature) === 'undefined') {
       // Deny any invalid Signature header
+      console.info('Rejecting: Invalid signature header')
       return res.status(403).send('Request not signed');
     }
 
@@ -102,6 +111,7 @@ module.exports = function (app) {
     }
     
     res.setHeader('Content-Type', 'application/activity+json');
+    console.info('Getting actor details');
     const actorRequest = https.request(options, (actorResponse) => { // https://attacomsian.com/blog/node-make-http-requests
       let actorData = '';
 
@@ -113,16 +123,42 @@ module.exports = function (app) {
       // called when the complete response is received.
       actorResponse.on('end', () => {
         const actor = JSON.parse(actorData);
+        console.info('Actor details:', actor);
         const { publicKeyPem } = actor.publicKey;
 
         const isVerified = app.verifySignature(publicKeyPem, signature, comparisonString);
         if (isVerified) {
           if (req.body.type === 'Follow') {
-            processFollow(app, actor, req.body.object);
+            processFollow(app, actor, req.body.object, () => {
+              console.info('Follower added');
+              res.status(200).end();
+            }, err => {
+              console.error("Error: ", err);
+              if (err == 'Follower already exists') {
+                res.status(403).end();
+              } else {
+                res.status(500).send({
+                  message: 'Something went wrong.',
+                });
+              }
+            });
           } else {
-            processUnFollow(app, actor);
+            processUnFollow(app, actor, () => {
+              console.info('Follower removed');
+              res.status(200).end();
+            }, err => {
+              console.error("Error: ", err);
+              if (err == 'No rows removed') {
+                res.status(403).end();
+              } else {
+                res.status(500).send({
+                  message: 'Something went wrong.',
+                });
+              }
+            });
           }
         } else {
+          console.info('Rejecting: Invalid signature');
           res.status(403).send('Invalid signature');
         }
       });

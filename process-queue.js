@@ -28,15 +28,15 @@ module.exports = function (app) {
       const bookData = getBookData(job);
       const activity = app.createActivity(bookData);
       app.sendActivity(job.recipient, activity, (response) => {
-        console.log(response);
+        console.info('app.sendActivity response:\n', response);
         const removeJob = app.db.prepare('DELETE FROM send_queue WHERE rowid = ?');
         removeJob.run(job.rowid);
       }, (error) => {
-        console.error(error);
+        console.error('app.sendActivity error:\n', error);
         const update = app.db.prepare('UPDATE send_queue SET attempts = ?, next_attempt = ? WHERE rowid = ?');
         const in2Minutes = now + (settings.resendMinutesDelay * 60);
         const info = update.run(job.attempts + 1, in2Minutes, job.rowid);
-        console.log('Will re-attempt send to ' + job.recipient, info);
+        console.info(`Will re-attempt send to ${job.recipient} in ${settings.resendMinutesDelay} minutes`);
       });
     } else {
       app.sendJob.stop();  // If there are no more new jobs, stop the cron job.
