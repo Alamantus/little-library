@@ -22,7 +22,7 @@ module.exports = function (app) {
     const job = app.db.prepare('SELECT * FROM send_queue WHERE attempts < ? ORDER BY next_attempt LIMIT 1')
       .get(settings.maxResendAttempts);
     if (typeof job !== 'undefined') {
-      const now = Math.floor(Date.now() / 1000)
+      const now = Math.floor(Date.now() / 1000);
       if (job.next_attempt > now) return;
 
       const bookData = getBookData(job);

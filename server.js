@@ -98,8 +98,9 @@ function Server () {
     this.db.prepare('CREATE TABLE IF NOT EXISTS followers (actor TEXT UNIQUE, created INT)').run();
     this.db.prepare('CREATE TABLE IF NOT EXISTS send_queue (recipient TEXT, data TEXT, action TEXT, attempts INT, next_attempt INT)').run();
 
-    this.followersCache = this.db.prepare('SELECT actor FROM followers ORDER BY created DESC').all();
-    if (this.followersCache.length < 1) console.log('No followers!');
+    const followers = this.db.prepare('SELECT actor FROM followers').all();
+    this.followersCache = new Set(followers);
+    if (this.followersCache.size < 1) console.log('No followers!');
 
     // Start send queue
     var cron = require('node-cron');
@@ -195,12 +196,13 @@ Server.prototype.addBook = function (uploadData = {}, success = () => {}, error 
       self.shelfCache = self.getShelfData();
       success();
 
-      if (settings.federate && self.followersCache.length > 0) {
+      if (settings.federate && self.followersCache.size > 0) {
         try{
+          const followers = [...self.followersCache];
           const query = 'INSERT INTO send_queue (recipient, data, action, attempts, next_attempt) VALUES '
-            + self.followersCache.map(() => '(?, ?, ?, ?, ?)').join(', ');
+            + followers.map(() => '(?, ?, ?, ?, ?)').join(', ');
           const stmt = self.db.prepare(query);
-          const queueData = self.followersCache.map(follower => [follower, bookDataPath, 'added', 0, 0])
+          const queueData = followers.map(follower => [follower, bookDataPath, 'added', 0, 0])
             .reduce((result, current) => [...result, ...current], []);
           stmt.run(queueData);
           self.firstSendJob.start();
@@ -352,7 +354,7 @@ Server.prototype.createActivity = function(bookData) {
 
 Server.prototype.sendActivity = function (inbox, data, success = () => {}, fail = () => {}) {
   const inboxUrl = new URL(inbox);
-  const signatureHeaders = app.createSignatureHeaders(inboxUrl.hostname);
+  const signatureHeaders = this.createSignatureHeaders(inboxUrl.hostname);
   const options = {
     protocol: inboxUrl.protocol,
     hostname: inboxUrl.hostname,

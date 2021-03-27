@@ -3,9 +3,58 @@ const path = require('path');
 
 const settings = require('../../settings.json');
 
+function processFollow(app, actor, followObject) {
+  let row;
+  try {
+    const select = app.db.prepare('SELECT actor FROM followers WHERE actor=?');
+    row = select.get(actor.id);
+  } catch (e) {
+    console.error(e);
+  }
+  if (!row) {
+    app.sendActivity(actor.inbox, {
+      '@context': 'https://www.w3.org/ns/activitystreams',
+      id: `https://${settings.domain}/activitypub/actor#accepts/follows/${actor.id}`,
+      summary: `${settings.siteTitle} accepted a Follow request`,
+      type: 'Accept',
+      actor: `https://${settings.domain}/activitypub/actor`,
+      object: followObject,
+    }, (response) => {
+      console.log(response);
+        const stmt = app.db.prepare('INSERT INTO followers VALUES (?, ?)');
+        stmt.run(actor.id, Date.now());
+        app.followersCache.add(actor.id);
+        res.status(200).end();
+    }, (error) => {
+      console.error("Error: ", error);
+      res.status(500).send({
+        message: 'Something went wrong.',
+      });
+    });
+  } else {
+    console.log('Follower already exists');
+    res.status(403).end();
+  }
+}
+
+function processUnFollow(app, actor) {
+  try {
+    const removeFollower = app.db.prepare('DELETE FROM followers WHERE actor=?');
+    removeFollower.run(actor.id);
+    app.followersCache.delete(actor.id);
+    const removeJobs = app.db.prepare('DELETE FROM send_queue WHERE recipient=?');
+    removeJobs.run(actor.id);
+  } catch (e) {
+    console.error(e);
+  }
+}
+
 module.exports = function (app) {
   app.server.post('/activitypub/inbox', function (req, res) {
-    if (req.body.type !== 'Follow' || req.body.object !== `https://${settings.domain}/activitypub/actor`) {
+    if (req.body.type !== 'Follow'
+      || (req.body.type === 'Undo' && req.body.object.type !== 'Follow')
+      || req.body.object !== `https://${settings.domain}/activitypub/actor`
+    ) {
       // Only accept follow requests
       return res.status(403).end();
     }
@@ -68,36 +117,10 @@ module.exports = function (app) {
 
         const isVerified = app.verifySignature(publicKeyPem, signature, comparisonString);
         if (isVerified) {
-          let row;
-          try {
-            const select = app.db.prepare('SELECT actor FROM followers WHERE actor=?');
-            row = select.get(actor.id);
-          } catch (e) {
-            console.error(e);
-          }
-          if (!row) {
-            app.sendActivity(actor.inbox, {
-              '@context': 'https://www.w3.org/ns/activitystreams',
-              id: `https://${settings.domain}/activitypub/actor#accepts/follows/${actor.id}`,
-              summary: `${settings.siteTitle} accepted a Follow request`,
-              type: 'Accept',
-              actor: `https://${settings.domain}/activitypub/actor`,
-              object: req.body.object,
-            }, (response) => {
-              console.log(response);
-                const stmt = app.db.prepare('INSERT INTO followers VALUES (?, ?)');
-                stmt.run(actor.id, Date.now());
-                app.followersCache.unshift(actor.id); // Put new follower at front of array
-                res.status(200).end();
-            }, (error) => {
-              console.error("Error: ", error);
-              res.status(500).send({
-                message: 'Something went wrong.',
-              });
-            });
+          if (req.body.type === 'Follow') {
+            processFollow(app, actor, req.body.object);
           } else {
-            console.log('Follower already exists');
-            res.status(403).end();
+            processUnFollow(app, actor);
           }
         } else {
           res.status(403).send('Invalid signature');
