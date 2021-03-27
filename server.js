@@ -350,6 +350,42 @@ Server.prototype.createActivity = function(bookData) {
   };
 }
 
+Server.prototype.sendActivity = function (inbox, data, success = () => {}, fail = () => {}) {
+  const inboxUrl = new URL(inbox);
+  const signatureHeaders = app.createSignatureHeaders(inboxUrl.hostname);
+  const options = {
+    protocol: inboxUrl.protocol,
+    hostname: inboxUrl.hostname,
+    port: inboxUrl.port,
+    path: inboxUrl.pathname,
+    method: 'POST',
+    headers: {
+      ...signatureHeaders,
+      'Content-Type': 'application/activity+json',
+    }
+  }
+
+  res.setHeader('Content-Type', 'application/activity+json');
+  sendRequest = https.request(options, (sendResponse) => {
+    let responseData = '';
+
+    // called when a data chunk is received.
+    sendResponse.on('data', (chunk) => {
+      responseData += chunk;
+    });
+
+    // called when the complete response is received.
+    sendResponse.on('end', () => {
+      success(responseData);
+    });
+  }).on("error", (error) => {
+    fail(error);
+  });
+
+  sendRequest.write(JSON.stringify(data));
+  sendRequest.end();
+}
+
 Server.prototype.start = function () {
   this.http.listen((process.env.PORT || settings.port), () => {
     console.log('Started server on port ' + (process.env.PORT || settings.port));

@@ -76,51 +76,25 @@ module.exports = function (app) {
             console.error(e);
           }
           if (!row) {
-            const followerUrl = new URL(actor.inbox);
-            const signatureHeaders = app.createSignatureHeaders(followerUrl.hostname);
-            const options = {
-              protocol: followerUrl.protocol,
-              hostname: followerUrl.hostname,
-              port: followerUrl.port,
-              path: followerUrl.pathname,
-              method: 'POST',
-              headers: {
-                ...signatureHeaders,
-                'Content-Type': 'application/activity+json',
-              }
-            }
-            acceptRequest = https.request(options, (acceptResponse) => {
-              let acceptData = '';
-
-              // called when a data chunk is received.
-              acceptResponse.on('data', (chunk) => {
-                acceptData += chunk;
-              });
-
-              // called when the complete response is received.
-              acceptResponse.on('end', () => {
-                console.log(acceptData);
-                const stmt = app.db.prepare('INSERT INTO followers VALUES (?, ?)');
-                stmt.run(actor.id, Date.now());
-                app.followersCache.unshift(actor.id); // Put new follower at front of array
-                res.status(200).end();
-              });
-            }).on("error", (error) => {
-              console.error("Error: ", error);
-              res.status(500).send({
-                message: 'Something went wrong.',
-              });
-            });
-
-            acceptRequest.write(JSON.stringify({
+            app.sendActivity(actor.inbox, {
               '@context': 'https://www.w3.org/ns/activitystreams',
               id: `https://${settings.domain}/activitypub/actor#accepts/follows/${actor.id}`,
               summary: `${settings.siteTitle} accepted a Follow request`,
               type: 'Accept',
               actor: `https://${settings.domain}/activitypub/actor`,
               object: req.body.object,
-            }));
-            acceptRequest.end();
+            }, (response) => {
+              console.log(response);
+                const stmt = app.db.prepare('INSERT INTO followers VALUES (?, ?)');
+                stmt.run(actor.id, Date.now());
+                app.followersCache.unshift(actor.id); // Put new follower at front of array
+                res.status(200).end();
+            }, (error) => {
+              console.error("Error: ", error);
+              res.status(500).send({
+                message: 'Something went wrong.',
+              });
+            });
           } else {
             console.log('Follower already exists');
             res.status(403).end();
