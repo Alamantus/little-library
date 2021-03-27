@@ -27,7 +27,7 @@ module.exports = function (app) {
 
       const bookData = getBookData(job);
       const activity = app.createActivity(bookData);
-      
+      console.info('Sending activity:\n', activity);
       res.setHeader('Content-Type', 'application/activity+json');
       app.sendActivity(job.recipient, activity, (response) => {
         console.info('app.sendActivity response:\n', response);
@@ -41,6 +41,7 @@ module.exports = function (app) {
         console.info(`Will re-attempt send to ${job.recipient} in ${settings.resendMinutesDelay} minutes`);
       });
     } else {
+      console.info('No more jobs, stopping the sendJob schedule')
       app.sendJob.stop();  // If there are no more new jobs, stop the cron job.
     }
   } catch (err) {

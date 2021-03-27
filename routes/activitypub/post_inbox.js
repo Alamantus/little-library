@@ -58,7 +58,7 @@ function processUnFollow(app, actor, success = () => {}, error = () => {}) {
 module.exports = function (app) {
   app.server.post('/activitypub/inbox', function (req, res) {
     console.info('Inbox request', req.body);
-    if (req.body.type !== 'Follow'
+    if (!['Follow', 'Undo'].includes(req.body.type)
       || (req.body.type === 'Undo' && req.body.object.type !== 'Follow')
       || req.body.object !== `https://${settings.domain}/activitypub/actor`
     ) {

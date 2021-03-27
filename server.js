@@ -205,7 +205,7 @@ Server.prototype.addBook = function (uploadData = {}, success = () => {}, error 
           const queueData = followers.map(follower => [follower, bookDataPath, 'added', 0, 0])
             .reduce((result, current) => [...result, ...current], []);
           stmt.run(queueData);
-          self.firstSendJob.start();
+          self.sendJob.start();
         } catch (err) {
           console.error('Could not queue', err);
         }
@@ -405,8 +405,7 @@ server.populateCaches();
 // Stop cron jobs when process ends
 if (settings.federate) {
   require('node-cleanup')(function (exitCode, signal) {
-      server.firstSendJob.destroy();
-      server.attemptResendJob.destroy();
+      server.sendJob.destroy();
       server.db.close();
   });
 }
