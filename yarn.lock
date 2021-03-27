@@ -1099,7 +1099,7 @@ __metadata:
     filenamify: ^4.2.0
     helmet: ^4.4.1
     node-cleanup: ^2.1.2
-    node-cron: ^3.0.0
+    node-cron: ^2
     onezip: ^5.0.0
     snarkdown: ^2.0.0
     socket.io: ^4.0.0
@@ -1230,22 +1230,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"moment-timezone@npm:^0.5.31":
-  version: 0.5.33
-  resolution: "moment-timezone@npm:0.5.33"
-  dependencies:
-    moment: ">= 2.9.0"
-  checksum: d4e72a3514a2885ab26b1cbc640e2f4785c997f9de28bb48bf3994ef137b0a560ca8f07eb07f11121e1223eef0c3bce4bc647b911111481a6a066bbc61285f99
-  languageName: node
-  linkType: hard
-
-"moment@npm:>= 2.9.0":
-  version: 2.29.1
-  resolution: "moment@npm:2.29.1"
-  checksum: 86729013febf7160de5b93da69273dd304d674b0224f9544b3abd09a87671ddd2cdd57598261ce57588910d63747ffd5590965e83c790d8bf327083c0e0a06e0
-  languageName: node
-  linkType: hard
-
 "ms@npm:2.0.0":
   version: 2.0.0
   resolution: "ms@npm:2.0.0"
@@ -1297,12 +1281,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-cron@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "node-cron@npm:3.0.0"
+"node-cron@npm:^2":
+  version: 2.0.3
+  resolution: "node-cron@npm:2.0.3"
   dependencies:
-    moment-timezone: ^0.5.31
-  checksum: a2fe998eeddec6e5c3f9e7af8b2169f9994842f7f86c8af756a6cfcf9025abca3a39bf6cc76a42922eb55eadb5345eace12fee68dde065e23211a857667e9561
+    opencollective-postinstall: ^2.0.0
+    tz-offset: 0.0.1
+  checksum: 857e68d5e5cce5c9648d8c6f2b8aa814319d7f21c5aabf8481d54fbcbfb4a2a2315fb99fd32d0d87e93ac64770dd60f7c71cc96435a13e7e5b1d890f241f8c49
   languageName: node
   linkType: hard
 
@@ -1410,6 +1395,15 @@ __metadata:
   bin:
     onezip: bin/onezip.js
   checksum: d9fd923ddec31b0b805fc3f161a013a328c00e8dafd045974a6455e56ee27060d7d6831aa218fa7a01ec65a14bed6c002c4d5622f9f953027cc5550634ba1255
+  languageName: node
+  linkType: hard
+
+"opencollective-postinstall@npm:^2.0.0":
+  version: 2.0.3
+  resolution: "opencollective-postinstall@npm:2.0.3"
+  bin:
+    opencollective-postinstall: index.js
+  checksum: d75b06b80eb426aaf099307ca4398f3119c8c86ff3806a95cfe234b979b80c07080040734fe2dc3c51fed5b15bd98dae88340807980bdc74aa1ebf045c74ef06
   languageName: node
   linkType: hard
 
@@ -2041,6 +2035,13 @@ __metadata:
     media-typer: 0.3.0
     mime-types: ~2.1.24
   checksum: 20a3514f1d835c979237995129d1f8c564325301e3a8f1c732bcbe1d7fa0ca1f65994e41a79e9030d79f31e5459bb9be5c377848fcb477cb3049a661b3713d74
+  languageName: node
+  linkType: hard
+
+"tz-offset@npm:0.0.1":
+  version: 0.0.1
+  resolution: "tz-offset@npm:0.0.1"
+  checksum: e6dc8d6b1d1ae971dad79b00ac60ff738ea8ceb4ab2984f6462941ca4124f87ae5a93fdbb2dc28c10122763b0dbeb64b04d3058f9df8f0bb91656cab9eeab81d
   languageName: node
   linkType: hard
 

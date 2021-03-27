@@ -21,7 +21,7 @@
     "filenamify": "^4.2.0",
     "helmet": "^4.4.1",
     "node-cleanup": "^2.1.2",
-    "node-cron": "^3.0.0",
+    "node-cron": "^2",
     "onezip": "^5.0.0",
     "snarkdown": "^2.0.0",
     "socket.io": "^4.0.0",
