@@ -13,6 +13,7 @@ function processFollow(app, actor, followObject, success = () => {}, error = () 
   }
   if (!row) {
     console.info('Sending Accept activity');
+
     app.sendActivity(actor.inbox, {
       '@context': 'https://www.w3.org/ns/activitystreams',
       id: `https://${settings.domain}/activitypub/actor#accepts/follows/${actor.id}`,
@@ -129,6 +130,7 @@ module.exports = function (app) {
         const isVerified = app.verifySignature(publicKeyPem, signature, comparisonString);
         if (isVerified) {
           if (req.body.type === 'Follow') {
+            res.setHeader('Content-Type', 'application/activity+json');
             processFollow(app, actor, req.body.object, () => {
               console.info('Follower added');
               res.status(200).end();

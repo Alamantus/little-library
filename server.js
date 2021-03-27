@@ -367,7 +367,6 @@ Server.prototype.sendActivity = function (inbox, data, success = () => {}, fail 
     }
   }
 
-  res.setHeader('Content-Type', 'application/activity+json');
   sendRequest = https.request(options, (sendResponse) => {
     let responseData = '';
 
