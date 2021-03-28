@@ -52,7 +52,7 @@ module.exports = function (app) {
   });
   app.server.get('/js/socket.io.js', (req, res) => {
     if (!app.socketioFileCache) {
-      const socketioPath = require.resolve('socket.io-client/dist/socket.io.min.js');
+      const socketioPath = require.resolve('socket.io-client/dist/socket.io.js');
       app.socketioFileCache = fs.readFileSync(socketioPath).toString('utf-8');
     }
     res.setHeader('Content-Type', 'text/javascript');
