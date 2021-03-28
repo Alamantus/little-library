@@ -102,6 +102,7 @@ module.exports = function (app) {
     }).forEach(pair => {
       signatureHeader[pair[0]] = pair[1];
     });
+    console.info('signature header:\n', signatureHeader);
 
     if (typeof (signatureHeader.keyId) === 'undefined'
       || typeof (signatureHeader.headers) === 'undefined'
@@ -121,6 +122,7 @@ module.exports = function (app) {
       }
       return `${signedHeaderName}: ${req.headers[signedHeaderName.toLowerCase()]}`;
     }).join('\n');
+    console.info('comparison string:\n', comparisonString)
 
     const actorUrl = new URL(signatureHeader.keyId);
     const options = {
