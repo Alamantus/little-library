@@ -77,8 +77,8 @@ function Server () {
         privateKeyEncoding: {
           type: 'pkcs1',      // recommended to be 'pkcs8' by the Node.js docs
           format: 'pem',
-          cipher: 'aes-256-cbc',
-          passphrase: settings.pkPassphrase,
+          // cipher: 'aes-256-cbc',
+          // passphrase: settings.pkPassphrase,
         }
       });
       this.publicKey = publicKey;
