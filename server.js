@@ -75,7 +75,7 @@ function Server () {
           format: 'pem'
         },
         privateKeyEncoding: {
-          type: 'pkcs8',      // recommended to be 'pkcs8' by the Node.js docs
+          type: 'pkcs1',      // recommended to be 'pkcs8' by the Node.js docs
           format: 'pem',
           cipher: 'aes-256-cbc',
           passphrase: settings.pkPassphrase,
@@ -313,10 +313,7 @@ Server.prototype.createSignatureHeaders = function(inboxUrl, digest) {
 
   const signer = crypto.createSign('sha256');
   signer.update(toSign);
-  const pk = crypto.createPrivateKey({
-    key: this.privateKey,
-    passphrase: settings.pkPassphrase,
-  });
+  const pk = crypto.createPrivateKey(this.privateKey);
   const signature = signer.sign(pk, 'base64');
   const signedHeaders = Object.keys(headers).map(header => header.toLowerCase()).join(' ');
   headers['Signature'] = `keyId="https://${settings.domain}/activitypub/actor#main-key",headers="${signedHeaders}",signature="${signature}"`;
