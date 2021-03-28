@@ -140,7 +140,12 @@ module.exports = function (app) {
         if (isVerified) {
           if (req.body.type === 'Follow') {
             res.setHeader('Content-Type', 'application/activity+json');
-            processFollow(app, actor, req.body.object, () => {
+            processFollow(app, actor, {
+              id: req.body.id,
+              actor: req.body.actor,
+              type: req.body.type,
+              object: req.body.object,
+            }, () => {
               console.info('Follower added');
               res.status(200).end();
             }, err => {
