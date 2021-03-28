@@ -58,12 +58,17 @@ function processUnFollow(app, actor, success = () => {}, error = () => {}) {
 module.exports = function (app) {
   app.server.post('/activitypub/inbox', function (req, res) {
     console.info('Inbox request', req.body);
-    if (!['Follow', 'Undo'].includes(req.body.type)
-      || (req.body.type === 'Undo' && req.body.object.type !== 'Follow')
-      || req.body.object !== `https://${settings.domain}/activitypub/actor`
-    ) {
+    const isValidType = ['Follow', 'Undo'].includes(req.body.type) && (req.body.type === 'Undo' ? req.body.object.type === 'Follow' : true);
+    if (!isValidType) {
       // Only accept follow requests
       console.info('Rejecting: Not a follow or unfollow request');
+      return res.status(403).end();
+    }
+
+    const isValidTarget = req.body.object === `https://${settings.domain}/activitypub/actor` || req.body.object.object === `https://${settings.domain}/activitypub/actor`;
+    if (!isValidTarget) {
+      // Only accept requests sent to server's actor
+      console.info('Rejecting: Not addressed to server');
       return res.status(403).end();
     }
     
