@@ -41,8 +41,8 @@ function processUnFollow(app, actor, success = () => {}, error = () => {}) {
   console.info('Removing follower:\n', actor);
   try {
     const removeFollower = app.db.prepare('DELETE FROM followers WHERE actor=?');
-    const success = removeFollower.run(actor.id);
-    if (success.changes > 0) {
+    const removedInfo = removeFollower.run(actor.id);
+    if (removedInfo.changes > 0) {
       app.followersCache.delete(actor.id);
       const removeJobs = app.db.prepare('DELETE FROM send_queue WHERE recipient=?');
       removeJobs.run(actor.id);

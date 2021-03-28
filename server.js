@@ -314,6 +314,12 @@ Server.prototype.createSignatureHeaders = function(targetHost) {
   };
 }
 
+Server.prototype.createDigestHeader = function(data) {
+  const hash = crypto.createHash('sha256');
+  hash.update(JSON.stringify(data));
+  return 'SHA-256=' + hash.digest('base64');
+}
+
 Server.prototype.createActivity = function(bookData) {
   bookData.author = bookData.author ? bookData.author : '<em>author not provided</em>';
   bookData.contributor = bookData.contributor ? bookData.contributor : 'Anonymous';
@@ -355,6 +361,7 @@ Server.prototype.createActivity = function(bookData) {
 Server.prototype.sendActivity = function (inbox, data, success = () => {}, fail = () => {}) {
   const inboxUrl = new URL(inbox);
   const signatureHeaders = this.createSignatureHeaders(inboxUrl.hostname);
+  const digest = this.createDigestHeader(data);
   const options = {
     protocol: inboxUrl.protocol,
     hostname: inboxUrl.hostname,
@@ -363,6 +370,7 @@ Server.prototype.sendActivity = function (inbox, data, success = () => {}, fail 
     method: 'POST',
     headers: {
       ...signatureHeaders,
+      'Digest': digest,
       'Content-Type': 'application/activity+json',
     }
   }
