@@ -315,9 +315,14 @@ Server.prototype.createSignatureHeaders = function(targetHost) {
 }
 
 Server.prototype.createDigestHeader = function(data) {
-  const hash = crypto.createHash('sha256');
-  hash.update(JSON.stringify(data));
-  return 'SHA-256=' + hash.digest('base64');
+  const toSign = JSON.stringify(data);
+  const signer = crypto.createSign('sha256');
+  signer.update(toSign);
+  const pk = crypto.createPrivateKey({
+    key: this.privateKey,
+    passphrase: settings.pkPassphrase,
+  });
+  return 'SHA-256=' + signer.sign(pk, 'base64');
 }
 
 Server.prototype.createActivity = function(bookData) {
