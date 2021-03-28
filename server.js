@@ -371,6 +371,7 @@ Server.prototype.createActivity = function(bookData) {
 }
 
 Server.prototype.sendActivity = function (inbox, data, success = () => {}, fail = () => {}) {
+  console.info('Sending data:\n', data);
   const inboxUrl = new URL(inbox);
   const digest = this.createDigestHeader(data);
   console.info('Digest:', digest);
@@ -384,6 +385,7 @@ Server.prototype.sendActivity = function (inbox, data, success = () => {}, fail 
     headers: signatureHeaders,
   }
 
+  console.info('Using these request options:\n', options);
   sendRequest = https.request(options, (sendResponse) => {
     let responseData = '';
 
