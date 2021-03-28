@@ -28,7 +28,6 @@ module.exports = function (app) {
       const bookData = getBookData(job);
       const activity = app.createActivity(bookData);
       console.info('Sending activity:\n', activity);
-      res.setHeader('Content-Type', 'application/activity+json');
       app.sendActivity(job.recipient, activity, (response) => {
         console.info('app.sendActivity response:\n', response);
         const removeJob = app.db.prepare('DELETE FROM send_queue WHERE rowid = ?');
