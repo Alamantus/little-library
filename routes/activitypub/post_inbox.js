@@ -21,6 +21,7 @@ function processFollow(app, actor, followObject, success = () => {}, error = () 
     }, (response) => {
       console.log(response);
       try {
+        // Should also store actor inbox
         const stmt = app.db.prepare('INSERT INTO followers VALUES (?, ?)');
         stmt.run(actor.id, Date.now());
       } catch (e) {

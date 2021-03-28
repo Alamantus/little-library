@@ -99,8 +99,9 @@ function Server () {
     this.db.prepare('CREATE TABLE IF NOT EXISTS followers (actor TEXT UNIQUE, created INT)').run();
     this.db.prepare('CREATE TABLE IF NOT EXISTS send_queue (recipient TEXT, data TEXT, action TEXT, attempts INT, next_attempt INT)').run();
 
+    // Probably need to change this to a Map so it can easily access the inbox as well
     const followers = this.db.prepare('SELECT actor FROM followers').all();
-    this.followersCache = new Set(followers);
+    this.followersCache = new Set(followers.map(follower => follower.actor));
     if (this.followersCache.size < 1) console.log('No followers!');
 
     // Start send queue
@@ -199,12 +200,13 @@ Server.prototype.addBook = function (uploadData = {}, success = () => {}, error 
 
       if (settings.federate && self.followersCache.size > 0) {
         try{
+          // Should change this so it can easily get the inbox URL rather than just actor
           const followers = [...self.followersCache];
           const query = 'INSERT INTO send_queue (recipient, data, action, attempts, next_attempt) VALUES '
             + followers.map(() => '(?, ?, ?, ?, ?)').join(', ');
           console.log(query);
           const stmt = self.db.prepare(query);
-          const queueData = followers.map(follower => [follower.actor, bookDataPath, 'added', 0, 0])
+          const queueData = followers.map(follower => [follower, bookDataPath, 'added', 0, 0])
             .reduce((result, current) => [...result, ...current], []);
           console.log(queueData);
           stmt.run(queueData);
