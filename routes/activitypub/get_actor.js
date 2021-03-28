@@ -12,7 +12,7 @@ module.exports = function (app) {
       type: 'Person',
       preferredUsername: 'shelf',
       name: settings.siteTitle,
-      summary: `A Little Library shelf. Give or take an ebook at https://${settings.domain}`,
+      summary: `A Little Library shelf. Give or take an ebook at <a href="https://${settings.domain}" target="_blank">https://${settings.domain}</a>`,
       url: `https://${settings.domain}/activitypub/actor`,
       inbox: `https://${settings.domain}/activitypub/inbox`,
       outbox: `https://${settings.domain}/activitypub/outbox`,
