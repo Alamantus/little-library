@@ -19,3 +19,4 @@ settings.json
 customHtmlAfterFooter.html
 *.pem
 *.db
+.DS_Store
