@@ -12,8 +12,6 @@ function processFollow(app, actor, followObject, success = () => {}, error = () 
     console.error(e);
   }
   if (!row) {
-    console.info('Sending Accept activity');
-
     app.sendActivity(actor.inbox, {
       '@context': 'https://www.w3.org/ns/activitystreams',
       id: `https://${settings.domain}/activitypub/actor#accepts/follows/${actor.id}`,
@@ -56,12 +54,12 @@ function processUnFollow(app, actor, success = () => {}, error = () => {}) {
 // The Inbox for Little Library only accepts Follow requests and Unfollow requests (including account deletions)
 module.exports = function (app) {
   app.server.post('/activitypub/inbox', function (req, res) {
-    console.info('Inbox request', req.body);
+    // console.info('Inbox request', req.body);
     const isValidType = ['Follow', 'Undo', 'Delete'].includes(req.body.type)  // Is it the right type?
       && (req.body.type === 'Undo' ? req.body.object.type === 'Follow' : true)  // If it's an Undo, is the undo object the right type?
       && (req.body.type === 'Delete' && typeof req.body.object !== 'string' ? ['Person', 'Tombstone'].includes(req.body.object.type) : true); // If it's a Delete and the object has a type, is it valid?
     if (!isValidType) {
-      console.info('Rejecting: Not a follow or unfollow request');
+      // console.info('Rejecting: Not a follow or unfollow request');
       return res.status(403).end();
     }
 
@@ -70,19 +68,19 @@ module.exports = function (app) {
       || (req.body.type === 'Delete' && typeof req.body.object === 'string' && req.body.object === req.body.actor);
     if (!isValidTarget) {
       // Only accept requests sent to server's actor
-      console.info('Rejecting: Not addressed to server');
+      // console.info('Rejecting: Not addressed to server');
       return res.status(403).end();
     }
     
     if (typeof (req.headers.signature) === 'undefined') {
       // Deny any requests missing a signature
-      console.info('Rejecting: No signature');
+      // console.info('Rejecting: No signature');
       return res.status(403).send('Request not signed');
     }
 
     if (req.body.type === 'Delete') {
       return processUnFollow(app, req.body.actor, () => {
-        console.info('Follower removed');
+        // console.info('Follower removed');
         res.status(200).end();
       }, err => {
         console.error("Error: ", err);
@@ -102,13 +100,13 @@ module.exports = function (app) {
     }).forEach(pair => {
       signatureHeader[pair[0]] = pair[1];
     });
-    console.info('signature header:\n', signatureHeader);
+    // console.info('signature header:\n', signatureHeader);
 
     if (typeof (signatureHeader.keyId) === 'undefined'
       || typeof (signatureHeader.headers) === 'undefined'
       || typeof (signatureHeader.signature) === 'undefined') {
       // Deny any invalid Signature header
-      console.info('Rejecting: Invalid signature header')
+      // console.info('Rejecting: Invalid signature header')
       return res.status(403).send('Request not signed');
     }
 
@@ -122,7 +120,6 @@ module.exports = function (app) {
       }
       return `${signedHeaderName}: ${req.headers[signedHeaderName.toLowerCase()]}`;
     }).join('\n');
-    console.info('comparison string:\n', comparisonString)
 
     const actorUrl = new URL(signatureHeader.keyId);
     const options = {
@@ -160,7 +157,7 @@ module.exports = function (app) {
               type: req.body.type,
               object: req.body.object,
             }, () => {
-              console.info('Follower added');
+              // console.info('Follower added');
               res.status(200).end();
             }, err => {
               console.error("Error: ", err);
@@ -174,7 +171,7 @@ module.exports = function (app) {
             });
           } else {  // If it's not a Follow, then it is an unfollow/account deletion.
             processUnFollow(app, actor, () => {
-              console.info('Follower removed');
+              // console.info('Follower removed');
               res.status(200).end();
             }, err => {
               console.error("Error: ", err);
@@ -188,7 +185,7 @@ module.exports = function (app) {
             });
           }
         } else {
-          console.info('Rejecting: Invalid signature');
+          // console.info('Rejecting: Invalid signature');
           res.status(403).send('Invalid signature');
         }
       });

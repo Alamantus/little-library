@@ -313,7 +313,6 @@ Server.prototype.createSignatureHeaders = function(inboxUrl, digest) {
   const toSign = Object.keys(headers).map(header => {
     return `${header.toLowerCase()}: ${headers[header]}`;
   }).join('\n');
-  console.info('toSign:\n', toSign);
 
   const signer = crypto.createSign('sha256');
   signer.update(toSign);
@@ -324,8 +323,6 @@ Server.prototype.createSignatureHeaders = function(inboxUrl, digest) {
   const signature = signer.sign(pk, 'base64');
   const signedHeaders = Object.keys(headers).map(header => header.toLowerCase()).join(' ');
   headers['Signature'] = `keyId="https://${settings.domain}/activitypub/actor#main-key",headers="${signedHeaders}",signature="${signature}"`;
-
-  console.info('self verification:\n', this.verifySignature(this.publicKey, signature, toSign));
 
   delete headers['(request-target)'];
 
@@ -378,7 +375,6 @@ Server.prototype.createActivity = function(bookData) {
 }
 
 Server.prototype.sendActivity = function (inbox, data, success = () => {}, fail = () => {}) {
-  console.info('Sending data:\n', data);
   const inboxUrl = new URL(inbox);
   const digest = this.createDigestHeader(data);
   const signatureHeaders = this.createSignatureHeaders(inboxUrl, digest);
@@ -391,7 +387,6 @@ Server.prototype.sendActivity = function (inbox, data, success = () => {}, fail 
     headers: signatureHeaders,
   }
 
-  console.info('Using these request options:\n', options);
   sendRequest = https.request(options, (sendResponse) => {
     let responseData = '';
 
