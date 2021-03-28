@@ -297,9 +297,20 @@ Server.prototype.verifySignature = function (publicKey, signature, comparison) {
   return verifier.verify(pk, signature, 'base64');
 }
 
-Server.prototype.createSignatureHeaders = function(targetHost) {
+Server.prototype.createSignatureHeaders = function(inboxUrl, digest) {
   const UTCDateString = new Date().toUTCString();
-  const toSign = `(request-target): post /inbox\nhost: ${targetHost}\ndate: ${UTCDateString}`;
+  const headers = {
+    '(request-target)': `post ${inboxUrl.pathName}`,
+    'Host': inboxUrl.hostname,
+    'Date': UTCDateString,
+    'Digest': digest,
+    'Content-Type': 'application/activity+json',
+  };
+
+  const toSign = Object.keys(headers).map(header => {
+    return `${header.toLowerCase()}: ${headers[header]}`;
+  }).join('\n');
+
   const signer = crypto.createSign('sha256');
   signer.update(toSign);
   const pk = crypto.createPrivateKey({
@@ -307,22 +318,18 @@ Server.prototype.createSignatureHeaders = function(targetHost) {
     passphrase: settings.pkPassphrase,
   });
   const signature = signer.sign(pk, 'base64');
-  return {
-    'Host': targetHost,
-    'Date': UTCDateString,
-    'Signature': `keyId="https://${settings.domain}/activitypub/actor#main-key",headers="(request-target) host date",signature="${signature}"`,
-  };
+  const signedHeaders = Object.keys(headers).map(header => header.toLowerCase()).join(' ');
+  headers['Signature'] = `keyId="https://${settings.domain}/activitypub/actor#main-key",headers="${signedHeaders}",signature="${signature}"`;
+
+  delete headers['(request-target)'];
+
+  return headers;
 }
 
 Server.prototype.createDigestHeader = function(data) {
-  const toSign = JSON.stringify(data);
-  const signer = crypto.createSign('sha256');
-  signer.update(toSign);
-  const pk = crypto.createPrivateKey({
-    key: this.privateKey,
-    passphrase: settings.pkPassphrase,
-  });
-  return 'SHA-256=' + signer.sign(pk, 'base64');
+  const hash = crypto.createHash('sha256');
+  hash.update(JSON.stringify(data));
+  return 'SHA-256=' + hash.digest('base64');
 }
 
 Server.prototype.createActivity = function(bookData) {
@@ -365,19 +372,16 @@ Server.prototype.createActivity = function(bookData) {
 
 Server.prototype.sendActivity = function (inbox, data, success = () => {}, fail = () => {}) {
   const inboxUrl = new URL(inbox);
-  const signatureHeaders = this.createSignatureHeaders(inboxUrl.hostname);
   const digest = this.createDigestHeader(data);
+  console.info('Digest:', digest);
+  const signatureHeaders = this.createSignatureHeaders(inboxUrl, digest);
   const options = {
     protocol: inboxUrl.protocol,
     hostname: inboxUrl.hostname,
     port: inboxUrl.port,
     path: inboxUrl.pathname,
     method: 'POST',
-    headers: {
-      ...signatureHeaders,
-      'Digest': digest,
-      'Content-Type': 'application/activity+json',
-    }
+    headers: signatureHeaders,
   }
 
   sendRequest = https.request(options, (sendResponse) => {
