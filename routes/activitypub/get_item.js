@@ -1,5 +1,4 @@
 const fecha = require('fecha');
-const md = require('snarkdown');
 
 const settings = require('../../settings.json');
 
@@ -39,44 +38,9 @@ module.exports = function (app) {
       return;
     }
 
-    bookData.author = bookData.author ? bookData.author : '<em>author not provided</em>';
-    bookData.contributor = bookData.contributor ? bookData.contributor : 'Anonymous';
-    let content;
-    if (bookData.action === 'added') {
-      content = `<p>New ${bookData.fileType} added: ${bookData.title} by ${bookData.author}</p><p>When adding, ${bookData.contributor} commented:</p><p>${md(bookData.summary)}</p>`;
-    } else {
-      content = `<p>The ${bookData.fileType} file of ${bookData.title} by ${bookData.author} (originally added by ${bookData.contributor}) has been removed from the shelf.</p>`;
-    }
-    const published = fecha.format(new Date(bookData.date), 'isoDateTime');
-    let item = {
-      id: `https://${settings.domain}/activitypub/${bookData.date}`,
-      type: 'Note',
-      summary: null,
-      inReplyTo: null,
-      published,
-      url: `https://${settings.domain}/activitypub/${bookData.date}`,
-      attributedTo: `https://${settings.domain}/activitypub/actor`,
-      content,
-      contentMap: { en: content, },
-      sensitive: false,
-      commentsEnabled: false,
-      to: [
-        'https://www.w3.org/ns/activitystreams#Public',
-      ],
-      cc: [
-        `https://${settings.domain}/activitypub/followers`,
-      ],
-      attachment: [],
-      tag: [],
-      replies: [],
-    };
-    if (req.params.id.indexOf('create-') >= 0) {
-      item = {
-        id: `https://${settings.domain}/activitypub/create-${bookData.date}`,
-        type: 'Create',
-        actor: `https://${settings.domain}/activitypub/actor`,
-        object: JSON.parse(JSON.stringify(item)),
-      };
+    let item = app.createActivity(bookData);
+    if (req.params.id.indexOf('create-') < 0) {
+      item = JSON.parse(JSON.stringify(item.object));
     }
 
     res.setHeader('Content-Type', 'application/activity+json');

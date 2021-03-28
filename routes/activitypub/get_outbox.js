@@ -1,5 +1,4 @@
 const fecha = require('fecha');
-const md = require('snarkdown');
 
 const settings = require('../../settings.json');
 

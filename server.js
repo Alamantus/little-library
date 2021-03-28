@@ -10,6 +10,7 @@ const filenamify = require('filenamify');
 const unusedFilename = require('unused-filename');
 const striptags = require('striptags');
 const fecha = require('fecha');
+const md = require('snarkdown');
 
 const settings = require('./settings.json');
 const privateKey = settings.sslPrivateKey ? fs.readFileSync(settings.sslPrivateKey, 'utf8') : null;
@@ -354,6 +355,7 @@ Server.prototype.createActivity = function(bookData) {
       content,
       contentMap: { en: content, },
       sensitive: false,
+      commentsEnabled: false,
       to: [
         'https://www.w3.org/ns/activitystreams#Public',
       ],
