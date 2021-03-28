@@ -55,17 +55,21 @@ function processUnFollow(app, actor, success = () => {}, error = () => {}) {
   }
 }
 
+// The Inbox for Little Library only accepts Follow requests and Unfollow requests (including account deletions)
 module.exports = function (app) {
   app.server.post('/activitypub/inbox', function (req, res) {
     console.info('Inbox request', req.body);
-    const isValidType = ['Follow', 'Undo'].includes(req.body.type) && (req.body.type === 'Undo' ? req.body.object.type === 'Follow' : true);
+    const isValidType = ['Follow', 'Undo', 'Delete'].includes(req.body.type)  // Is it the right type?
+      && (req.body.type === 'Undo' ? req.body.object.type === 'Follow' : true)  // If it's an Undo, is the undo object the right type?
+      && (req.body.type === 'Delete' && typeof req.body.object !== 'string' ? ['Person', 'Tombstone'].includes(req.body.object.type) : true); // If it's a Delete and the object has a type, is it valid?
     if (!isValidType) {
-      // Only accept follow requests
       console.info('Rejecting: Not a follow or unfollow request');
       return res.status(403).end();
     }
 
-    const isValidTarget = req.body.object === `https://${settings.domain}/activitypub/actor` || req.body.object.object === `https://${settings.domain}/activitypub/actor`;
+    const isValidTarget = req.body.object === `https://${settings.domain}/activitypub/actor`
+      || req.body.object.object === `https://${settings.domain}/activitypub/actor`
+      || (req.body.type === 'Delete' && typeof req.body.object === 'string' && req.body.object === req.body.actor);
     if (!isValidTarget) {
       // Only accept requests sent to server's actor
       console.info('Rejecting: Not addressed to server');
@@ -149,7 +153,7 @@ module.exports = function (app) {
                 });
               }
             });
-          } else {
+          } else {  // If it's not a Follow, then it is an unfollow/account deletion.
             processUnFollow(app, actor, () => {
               console.info('Follower removed');
               res.status(200).end();
