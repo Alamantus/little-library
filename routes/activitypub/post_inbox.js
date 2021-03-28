@@ -17,7 +17,6 @@ function processFollow(app, actor, followObject, success = () => {}, error = () 
     app.sendActivity(actor.inbox, {
       '@context': 'https://www.w3.org/ns/activitystreams',
       id: `https://${settings.domain}/activitypub/actor#accepts/follows/${actor.id}`,
-      summary: `${settings.siteTitle} accepted a Follow request`,
       type: 'Accept',
       actor: `https://${settings.domain}/activitypub/actor`,
       object: followObject,
@@ -38,7 +37,6 @@ function processFollow(app, actor, followObject, success = () => {}, error = () 
 }
 
 function processUnFollow(app, actor, success = () => {}, error = () => {}) {
-  console.info('Removing follower:\n', actor);
   try {
     const removeFollower = app.db.prepare('DELETE FROM followers WHERE actor=?');
     const removedInfo = removeFollower.run(actor.id);
@@ -82,6 +80,22 @@ module.exports = function (app) {
       return res.status(403).send('Request not signed');
     }
 
+    if (req.body.type === 'Delete') {
+      return processUnFollow(app, req.body.actor, () => {
+        console.info('Follower removed');
+        res.status(200).end();
+      }, err => {
+        console.error("Error: ", err);
+        if (err == 'No rows removed') {
+          res.status(403).end();
+        } else {
+          res.status(500).send({
+            message: 'Something went wrong.',
+          });
+        }
+      })
+    }
+
     const signatureHeader = {};
     req.headers.signature.split(',').map(piece => {
       return piece.split('=').map(part => part.replace(/^"(.+?)"$/, '$1')); // Remove outer quotes
@@ -121,7 +135,6 @@ module.exports = function (app) {
     }
     
     res.setHeader('Content-Type', 'application/activity+json');
-    console.info('Getting actor details');
     const actorRequest = https.request(options, (actorResponse) => { // https://attacomsian.com/blog/node-make-http-requests
       let actorData = '';
 
@@ -133,7 +146,6 @@ module.exports = function (app) {
       // called when the complete response is received.
       actorResponse.on('end', () => {
         const actor = JSON.parse(actorData);
-        console.info('Actor details:', actor);
         const { publicKeyPem } = actor.publicKey;
 
         const isVerified = app.verifySignature(publicKeyPem, signature, comparisonString);

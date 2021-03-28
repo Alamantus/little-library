@@ -328,7 +328,7 @@ Server.prototype.createSignatureHeaders = function(inboxUrl, digest) {
 
 Server.prototype.createDigestHeader = function(data) {
   const hash = crypto.createHash('sha256');
-  hash.update(JSON.stringify(data));
+  hash.update(JSON.stringify(data));  // `latin1` is equivalent to binary, according to https://nodejs.org/api/buffer.html#buffer_buffers_and_character_encodings
   return 'SHA-256=' + hash.digest('base64');
 }
 
@@ -374,7 +374,6 @@ Server.prototype.sendActivity = function (inbox, data, success = () => {}, fail 
   console.info('Sending data:\n', data);
   const inboxUrl = new URL(inbox);
   const digest = this.createDigestHeader(data);
-  console.info('Digest:', digest);
   const signatureHeaders = this.createSignatureHeaders(inboxUrl, digest);
   const options = {
     protocol: inboxUrl.protocol,
