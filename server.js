@@ -202,9 +202,11 @@ Server.prototype.addBook = function (uploadData = {}, success = () => {}, error 
           const followers = [...self.followersCache];
           const query = 'INSERT INTO send_queue (recipient, data, action, attempts, next_attempt) VALUES '
             + followers.map(() => '(?, ?, ?, ?, ?)').join(', ');
+          console.log(query);
           const stmt = self.db.prepare(query);
-          const queueData = followers.map(follower => [follower, bookDataPath, 'added', 0, 0])
+          const queueData = followers.map(follower => [follower.actor, bookDataPath, 'added', 0, 0])
             .reduce((result, current) => [...result, ...current], []);
+          console.log(queueData);
           stmt.run(queueData);
           self.sendJob.start();
         } catch (err) {
