@@ -303,7 +303,7 @@ Server.prototype.verifySignature = function (publicKey, signature, comparison) {
 Server.prototype.createSignatureHeaders = function(inboxUrl, digest) {
   const UTCDateString = new Date().toUTCString();
   const headers = {
-    '(request-target)': `post ${inboxUrl.pathName}`,
+    '(request-target)': `post ${inboxUrl.pathname}`,
     'Host': inboxUrl.hostname,
     'Date': UTCDateString,
     'Digest': digest,
@@ -324,7 +324,7 @@ Server.prototype.createSignatureHeaders = function(inboxUrl, digest) {
   const signature = signer.sign(pk, 'base64');
   const signedHeaders = Object.keys(headers).map(header => header.toLowerCase()).join(' ');
   headers['Signature'] = `keyId="https://${settings.domain}/activitypub/actor#main-key",headers="${signedHeaders}",signature="${signature}"`;
-  
+
   console.info('self verification:\n', this.verifySignature(this.publicKey, signature, toSign));
 
   delete headers['(request-target)'];
