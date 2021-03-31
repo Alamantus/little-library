@@ -9,7 +9,8 @@ A digital give-a-book, take-a-book library for ebooks.
 - **Small Footprint:** only allows ebook files and limited metadata and optional library size limit
 - **Digital Physicality:** know when you're not the only one visiting the little library
 - **Single-borrower:** removes ebook files from server when someone takes it
-- **Metadata history:** keeps a history of all books that have been on shelf
+- **Metadata History:** keeps a history of all books that have been on shelf
+- **ActicityPub Support:** can be followed by social accounts in [the Fediverse](https://fediverse.party)
 
 ### Requirements
 
@@ -63,7 +64,13 @@ Then copy `settings.example.json` to `settings.json` and make sure everything is
   "sslPrivateKey": null,  // The ssl private key received from your certificate authority for HTTPS support
   "sslCertificate": null, // The ssl certificate received from your certificate authority for HTTPS support
   "sslCertificateAuthority": null,  // The ssl certificate authority (CA) received from Let's Encrypt for HTTPS support
-  "forceHTTPS": false // Redirect all traffic for http to https (not sure why you wouldn't want this)
+  "forceHTTPS": false, // Redirect all traffic for http to https (not sure why you wouldn't want this)
+  "federate": true, // Enable users from other ActivityPub servers to follow this shelf and receive updates when books are added or removed (SSL/HTTPS in some form is REQUIRED, whether manually done here or via a reverse proxy)
+  "domain": "localhost",  // If `federate` is true, this must be a valid domain name pointing to this server Little Library server
+  "pkPassphrase": "top secret", // The plaintext password used to generate a secure key pair for signing and validating ActivityPub posts (keep it secret and DON'T CHANGE IT after your server has followers!)
+  "maxResendAttempts": 10,  // The maximum number of times Little Library will attempt to send an update to a follower after failing
+  "resendMinutesDelay": 6,  // The number of minutes between each re-send attempt
+  "deleteFollowerAfterMaxResendFails": false  // Set to true if you want Little Library to never attempt to send an update to a failed follower again (unless they re-follow)
 }
 ```
 
@@ -85,7 +92,7 @@ Or if you're using Yarn, it's important you use this instead:
 
 Navigate to `localhost:3000` in your favorite browser to see the Little Library.
 
-The Little Library allows anyone with access to it to give or take ebooks. I'll write a more in-depth bit about how exactly to use it when I have some more time.
+Little Library allows anyone with access to it to give or take ebooks. I'll write a more in-depth bit about how exactly to use it when I have some more time.
 
 ### Management
 
