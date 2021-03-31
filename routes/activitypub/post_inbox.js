@@ -3,53 +3,8 @@ const path = require('path');
 
 const settings = require('../../settings.json');
 
-function processFollow(app, actor, followObject, success = () => {}, error = () => {}) {
-  let row;
-  try {
-    const select = app.db.prepare('SELECT actor FROM followers WHERE actor=?');
-    row = select.get(actor.id);
-  } catch (e) {
-    console.error(e);
-  }
-  if (!row) {
-    app.sendActivity(actor.inbox, {
-      '@context': 'https://www.w3.org/ns/activitystreams',
-      id: `https://${settings.domain}/activitypub/actor#accepts/follows/${actor.id}`,
-      type: 'Accept',
-      actor: `https://${settings.domain}/activitypub/actor`,
-      object: followObject,
-    }, (response) => {
-      console.log(response);
-      try {
-        const stmt = app.db.prepare('INSERT INTO followers (actor, inbox, created) VALUES (?, ?, ?)');
-        stmt.run(actor.id, actor.inbox, Date.now());
-      } catch (e) {
-        console.error('Could not add follower to database:\n', e);
-      }
-      app.followersCache[actor.id] = actor.inbox;
-      success();
-    }, (err) => error(err));
-  } else {
-    error('Follower already exists');
-  }
-}
-
-function processUnFollow(app, actor, success = () => {}, error = () => {}) {
-  try {
-    const removeFollower = app.db.prepare('DELETE FROM followers WHERE actor=?');
-    const removedInfo = removeFollower.run(actor.id);
-    if (removedInfo.changes > 0) {
-      delete app.followersCache[actor.id];
-      const removeJobs = app.db.prepare('DELETE FROM send_queue WHERE recipient=?');
-      removeJobs.run(actor.id);
-      success();
-    } else {
-      error('No rows removed');
-    }
-  } catch (e) {
-    error(e);
-  }
-}
+const processFollow = require('../../actions/processFollow');
+const processUnfollow = require('../../actions/processUnfollow');
 
 // The Inbox for Little Library only accepts Follow requests and Unfollow requests (including account deletions)
 module.exports = function (app) {
@@ -79,7 +34,7 @@ module.exports = function (app) {
     }
 
     if (req.body.type === 'Delete') {
-      return processUnFollow(app, req.body.actor, () => {
+      return processUnfollow(app, req.body.actor, () => {
         // console.info('Follower removed');
         res.status(200).end();
       }, err => {
