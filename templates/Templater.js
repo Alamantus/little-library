@@ -26,7 +26,7 @@ module.exports = class {
         .replace(/\{\{allowedFormats\}\}/g, settings.allowedFormats.join(','))
         .replace(/\{\{maxFileSize\}\}/g, (settings.maxFileSize > 0 ? settings.maxFileSize + 'MB' : 'no'))
         .replace(/\{\{domain\}\}/g, settings.domain)
-        .replace(/\{\{federateDisplay\}\}/g, (settings.federate ? 'block' : 'none'));
+        .replace(/\{\{hiddenIfNotFederating\}\}/g, (!settings.federate ? ' is-hidden' : ''));
 
       if (fs.existsSync(path.resolve('./customHtmlAfterFooter.html'))) {
         const customHtmlAfterFooter = fs.readFileSync(path.resolve('./customHtmlAfterFooter.html'));

@@ -55,7 +55,7 @@
         <a class="navbar-item" href="/about">
           About
         </a>
-        <a style="display:{{federateDisplay}};" class="navbar-item" href="/about#federation">
+        <a class="navbar-item{{hiddenIfNotFederating}}" href="/about#federation">
           Follow
         </a>
       </div>
@@ -74,7 +74,7 @@
 
   <footer class="footer">
     <div class="content has-text-centered">
-      <p style="display:{{federateDisplay}};">
+      <p class="{{hiddenIfNotFederating}}">
         This <a href="https://fediverse.party" target="_blank">Fediverse</a> instance can be <a href="/about#federation">followed</a> at <code>shelf@{{domain}}</code>.
       </p>
       <p>
