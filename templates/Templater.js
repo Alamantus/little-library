@@ -25,6 +25,14 @@ module.exports = class {
         .replace(/\{\{titleSeparator\}\}/g, settings.titleSeparator)
         .replace(/\{\{allowedFormats\}\}/g, settings.allowedFormats.join(','))
         .replace(/\{\{maxFileSize\}\}/g, (settings.maxFileSize > 0 ? settings.maxFileSize + 'MB' : 'no'));
+      
+      if (settings.federate) {
+        const followHTML = `<p>
+          You can follow this shelf from an account in the <a href="https://fediverse.party" target="_blank">Fediverse</a> to receive updates when books are added or removed!
+          Search for <code>shelf@${settings.domain}</code> or <code>https://${settings.domain}/activitypub/actor</code> from your timeline.
+        </p>`;
+        filledTemplate = filledTemplate.replace(/\{\{fediverseFollow\}\}/g, followHTML);
+      }
 
       if (fs.existsSync(path.resolve('./customHtmlAfterFooter.html'))) {
         const customHtmlAfterFooter = fs.readFileSync(path.resolve('./customHtmlAfterFooter.html'));
