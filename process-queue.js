@@ -45,6 +45,7 @@ module.exports = function (app) {
     console.info('Sending activity:\n', activity);
     app.sendActivity(job.recipient, activity, (response) => {
       console.info('app.sendActivity response:\n', response);
+      console.log('job to delete', job);
       deleteJob(app, job);
     }, (error) => {
       console.error('app.sendActivity error:\n', error);
