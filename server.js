@@ -200,7 +200,7 @@ Server.prototype.addBook = function (uploadData = {}, success = () => {}, error 
       self.shelfCache = self.getShelfData();
       success();
 
-      if (settings.federate && self.followersCache.size > 0) {
+      if (settings.federate && Object.keys(self.followersCache).length > 0) {
         try{
           // Should change this so it can easily get the inbox URL rather than just actor
           const followers = Object.keys(self.followersCache);
@@ -260,7 +260,7 @@ Server.prototype.deleteBooks = function (socketId) {
         fs.renameSync(bookDataPath, historyDataPath);
         this.removeHistoryBeyondLimit();
 
-        if (settings.federate && this.followersCache.size > 0) {
+        if (settings.federate && Object.keys(this.followersCache).length > 0) {
           try{
             // Should change this so it can easily get the inbox URL rather than just actor
             const followers = Object.keys(this.followersCache);
@@ -272,6 +272,7 @@ Server.prototype.deleteBooks = function (socketId) {
               .reduce((result, current) => [...result, ...current], []);
             console.log(queueData);
             stmt.run(queueData);
+            console.log
             this.sendJob.start();
           } catch (err) {
             console.error('Could not queue', err);

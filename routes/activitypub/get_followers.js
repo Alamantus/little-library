@@ -6,8 +6,8 @@ module.exports = function (app) {
       '@context': 'https://www.w3.org/ns/activitystreams',
       summary: 'Users Following ' + settings.siteTitle,
       type: 'OrderedCollection',
-      totalItems: app.followersCache.size,
-      orderedItems: [...app.followersCache],
+      totalItems: Object.keys(app.followersCache).length,
+      orderedItems: Object.keys(app.followersCache),
     });
 
     res.setHeader('Content-Type', 'application/activity+json');
