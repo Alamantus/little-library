@@ -125,7 +125,7 @@ module.exports = function (app) {
               }
             });
           } else {  // If it's not a Follow, then it is an unfollow/account deletion.
-            processUnFollow(app, actor, () => {
+            processUnfollow(app, actor, () => {
               // console.info('Follower removed');
               res.status(200).end();
             }, err => {
