@@ -21,13 +21,12 @@ function processFollow(app, actor, followObject, success = () => {}, error = () 
     }, (response) => {
       console.log(response);
       try {
-        // Should also store actor inbox
-        const stmt = app.db.prepare('INSERT INTO followers VALUES (?, ?)');
-        stmt.run(actor.id, Date.now());
+        const stmt = app.db.prepare('INSERT INTO followers (actor, inbox, created) VALUES (?, ?, ?)');
+        stmt.run(actor.id, actor.inbox, Date.now());
       } catch (e) {
         console.error('Could not add follower to database:\n', e);
       }
-      app.followersCache.add(actor.id);
+      app.followersCache[actor.id] = actor.inbox;
       success();
     }, (err) => error(err));
   } else {
@@ -40,7 +39,7 @@ function processUnFollow(app, actor, success = () => {}, error = () => {}) {
     const removeFollower = app.db.prepare('DELETE FROM followers WHERE actor=?');
     const removedInfo = removeFollower.run(actor.id);
     if (removedInfo.changes > 0) {
-      app.followersCache.delete(actor.id);
+      delete app.followersCache[actor.id];
       const removeJobs = app.db.prepare('DELETE FROM send_queue WHERE recipient=?');
       removeJobs.run(actor.id);
       success();

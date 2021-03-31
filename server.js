@@ -96,18 +96,20 @@ function Server () {
     this.db = new sqlite3(path.resolve('./activitypub.db'), {
       verbose: settings.domain === 'localhost' ? console.log : null,
     });
-    this.db.prepare('CREATE TABLE IF NOT EXISTS followers (actor TEXT UNIQUE, created INT)').run();
+    this.db.prepare('CREATE TABLE IF NOT EXISTS followers (actor TEXT UNIQUE, inbox TEXT, created INT)').run();
     this.db.prepare('CREATE TABLE IF NOT EXISTS send_queue (recipient TEXT, data TEXT, action TEXT, attempts INT, next_attempt INT)').run();
 
     // Probably need to change this to a Map so it can easily access the inbox as well
-    const followers = this.db.prepare('SELECT actor FROM followers').all();
-    this.followersCache = new Set(followers.map(follower => follower.actor));
-    if (this.followersCache.size < 1) console.log('No followers!');
+    const followers = this.db.prepare('SELECT actor, inbox FROM followers').all();
+    this.followersCache = {};
+    followers.forEach(follower => {
+      this.followersCache[follower.actor] = follower.inbox
+    });
 
     // Start send queue
     var cron = require('node-cron');
     var processQueue = require('./process-queue');
-    this.sendJob = cron.schedule('* * * * *', () => processQueue(this));
+    this.sendJob = cron.schedule('* * * * * *', () => processQueue(this));
   }
 }
 
@@ -201,12 +203,12 @@ Server.prototype.addBook = function (uploadData = {}, success = () => {}, error 
       if (settings.federate && self.followersCache.size > 0) {
         try{
           // Should change this so it can easily get the inbox URL rather than just actor
-          const followers = [...self.followersCache];
+          const followers = Object.keys(self.followersCache);
           const query = 'INSERT INTO send_queue (recipient, data, action, attempts, next_attempt) VALUES '
             + followers.map(() => '(?, ?, ?, ?, ?)').join(', ');
           console.log(query);
           const stmt = self.db.prepare(query);
-          const queueData = followers.map(follower => [follower, bookDataPath, 'added', 0, 0])
+          const queueData = followers.map(follower => [self.followersCache[follower], bookDataPath, 'added', 0, 0])
             .reduce((result, current) => [...result, ...current], []);
           console.log(queueData);
           stmt.run(queueData);
@@ -253,9 +255,28 @@ Server.prototype.deleteBooks = function (socketId) {
     if (data.socketId === socketId) {
       const check = this.checkId(data.bookId, (bookPath, bookDataPath) => {
         fs.unlinkSync(bookPath);
-        // console.log('removed ' + bookPath);
-        fs.renameSync(bookDataPath, unusedFilename.sync(path.resolve(this.historyLocation, Date.now() + '.json')));
+        
+        const historyDataPath = unusedFilename.sync(path.resolve(this.historyLocation, Date.now() + '.json'));
+        fs.renameSync(bookDataPath, historyDataPath);
         this.removeHistoryBeyondLimit();
+
+        if (settings.federate && this.followersCache.size > 0) {
+          try{
+            // Should change this so it can easily get the inbox URL rather than just actor
+            const followers = Object.keys(this.followersCache);
+            const query = 'INSERT INTO send_queue (recipient, data, action, attempts, next_attempt) VALUES '
+              + followers.map(() => '(?, ?, ?, ?, ?)').join(', ');
+            console.log(query);
+            const stmt = this.db.prepare(query);
+            const queueData = followers.map(follower => [this.followersCache[follower], historyDataPath, 'removed', 0, 0])
+              .reduce((result, current) => [...result, ...current], []);
+            console.log(queueData);
+            stmt.run(queueData);
+            this.sendJob.start();
+          } catch (err) {
+            console.error('Could not queue', err);
+          }
+        }
       });
       if (check === false) {
         console.log('couldn\'t find data.bookId');
