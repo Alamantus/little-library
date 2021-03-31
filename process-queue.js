@@ -17,7 +17,7 @@ function getBookData(job) {
   };
 }
 
-function deleteJob(job) {
+function deleteJob(app, job) {
   const removeJob = app.db.prepare('DELETE FROM send_queue WHERE rowid = ?');
   try {
     removeJob.run(job.rowid);
@@ -45,12 +45,12 @@ module.exports = function (app) {
     console.info('Sending activity:\n', activity);
     app.sendActivity(job.recipient, activity, (response) => {
       console.info('app.sendActivity response:\n', response);
-      deleteJob(job);
+      deleteJob(app, job);
     }, (error) => {
       console.error('app.sendActivity error:\n', error);
 
       if (job.attempts + 1 >= settings.maxResendAttempts) {
-        deleteJob(job);
+        deleteJob(app, job);
 
         if (settings.deleteFollowerAfterMaxResendFails) {
           let followersWithInbox;
