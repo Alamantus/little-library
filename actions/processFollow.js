@@ -1,3 +1,5 @@
+const settings = require('../settings.json');
+
 module.exports = function (app, actor, followObject, success = () => {}, error = () => {}) {
   let row;
   try {
