@@ -24,15 +24,9 @@ module.exports = class {
       let filledTemplate = data.replace(/\{\{siteTitle\}\}/g, settings.siteTitle)
         .replace(/\{\{titleSeparator\}\}/g, settings.titleSeparator)
         .replace(/\{\{allowedFormats\}\}/g, settings.allowedFormats.join(','))
-        .replace(/\{\{maxFileSize\}\}/g, (settings.maxFileSize > 0 ? settings.maxFileSize + 'MB' : 'no'));
-      
-      if (settings.federate) {
-        const followHTML = `<p>
-          You can follow this shelf from an account in the <a href="https://fediverse.party" target="_blank">Fediverse</a> to receive updates when books are added or removed!
-          Search for <code>shelf@${settings.domain}</code> or <code>https://${settings.domain}/activitypub/actor</code> from your timeline.
-        </p>`;
-        filledTemplate = filledTemplate.replace(/\{\{fediverseFollow\}\}/g, followHTML);
-      }
+        .replace(/\{\{maxFileSize\}\}/g, (settings.maxFileSize > 0 ? settings.maxFileSize + 'MB' : 'no'))
+        .replace(/\{\{domain\}\}/g, settings.domain)
+        .replace(/\{\{federateDisplay\}\}/g, (settings.federate ? 'block' : 'none'));
 
       if (fs.existsSync(path.resolve('./customHtmlAfterFooter.html'))) {
         const customHtmlAfterFooter = fs.readFileSync(path.resolve('./customHtmlAfterFooter.html'));

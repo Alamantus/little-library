@@ -55,6 +55,9 @@
         <a class="navbar-item" href="/about">
           About
         </a>
+        <a style="display:{{federateDisplay}};" class="navbar-item" href="/about#federation">
+          Follow
+        </a>
       </div>
     </div>
   </nav>
@@ -71,7 +74,9 @@
 
   <footer class="footer">
     <div class="content has-text-centered">
-      {{fediverseFollow}}
+      <p style="display:{{federateDisplay}};">
+        This <a href="https://fediverse.party" target="_blank">Fediverse</a> instance can be <a href="/about#federation">followed</a> at <code>shelf@{{domain}}</code>.
+      </p>
       <p>
         <strong>Little Library</strong> by <a href="https://robbie.antenesse.net" target="_blank">Robbie Antenesse</a> is intended
         for personal use only.

@@ -1,5 +1,5 @@
 <div class="columns">
-  <div class="column is-8 is-offset-2">
+  <article class="column is-8 is-offset-2">
     <h2 class="title">About</h2>
     <div class="content">
       <p>
@@ -62,6 +62,29 @@
         the <a href="{{resourcePath}}history">History listing</a> so that anyone can look at what books
         had been on the shelf at one time and see what the contributor thought about it.
       </p>
+
+      <div id="federation" style="display:{{federateDisplay}}">
+        <h3>Federation</h3>
+        <p>
+          This instance of Little Library can be followed by any account in the
+          <a href="https://fediverse.party" target="_blank">Fediverse</a> using the ActivityPub protocol!
+          (That includes services like Mastodon, Pleroma, Misskey, and many others!)
+          Accounts following this shelf will see whenever books are added or removed from the shelf
+          right from their timeline.
+        </p>
+        <p>
+          In order to follow this shelf, just search for either <code>shelf@{{domain}}</code> or
+          <code>https://{{domain}}/activitypub/actor</code> from your server's interface (in Mastodon,
+          type one or the other of the above into the Search bar until it pops up under "People").
+          Then just click the Follow button after it shows up, and you will see update messages in your
+          timeline whenever they are made!
+        </p>
+        <p>
+          Note that Little Library only accepts Follow and Unfollow requests. You can Like/Favorite/Boost
+          messages, but it will only be for your benefit&mdash;Likes and Boosts are not stored or displayed
+          on the post. Likewise, messages sent to {{siteTitle}} will not be received.
+        </p>
+      </div>
     </div>
-  </div>
+  </article>
 </div>
