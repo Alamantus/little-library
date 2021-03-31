@@ -259,6 +259,7 @@ Server.prototype.deleteBooks = function (socketId) {
         const historyDataPath = unusedFilename.sync(path.resolve(this.historyLocation, Date.now() + '.json'));
         fs.renameSync(bookDataPath, historyDataPath);
         this.removeHistoryBeyondLimit();
+        this.historyCache = this.getHistoryData();
 
         if (settings.federate && Object.keys(this.followersCache).length > 0) {
           try{
