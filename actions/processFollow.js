@@ -24,6 +24,7 @@ module.exports = function (app, actor, followObject, success = () => {}, error =
         console.error('Could not add follower to database:\n', e);
       }
       app.followersCache[actor.id] = actor.inbox;
+      console.info('Added follower: ' + actor.id);
       success();
     }, (err) => error(err));
   } else {

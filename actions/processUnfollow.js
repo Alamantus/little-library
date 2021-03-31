@@ -6,6 +6,7 @@ module.exports = function (app, actor, success = () => {}, error = () => {}) {
       delete app.followersCache[actor.id];
       const removeJobs = app.db.prepare('DELETE FROM send_queue WHERE recipient=?');
       removeJobs.run(actor.inbox);
+      console.info('Removed follower: ' + actor.id);
       success();
     } else {
       error('No rows removed');
