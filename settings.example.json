@@ -19,5 +19,6 @@
   "domain": "localhost",
   "pkPassphrase": "top secret",
   "maxResendAttempts": 10,
-  "resendMinutesDelay": 2
+  "resendMinutesDelay": 6,
+  "deleteFollowerAfterMaxResendFails": false
 }
