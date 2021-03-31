@@ -5,6 +5,7 @@ const sqlite3 = require('better-sqlite3');
 const settings = require('./settings.json');
 
 function getBookData(job) {
+  // This should use the cache instead of reading the file
   const savedBookData = JSON.parse(fs.readFileSync(job.data).toString('utf-8'));
   return {
     title: savedBookData.title,
@@ -18,9 +19,9 @@ function getBookData(job) {
 }
 
 function deleteJob(app, job) {
-  const removeJob = app.db.prepare('DELETE FROM send_queue WHERE rowid = ?');
+  const removeJob = app.db.prepare('DELETE FROM send_queue WHERE recipient = ? AND data = ?');
   try {
-    removeJob.run(job.rowid);
+    removeJob.run(job.recipient, job.data);
   } catch (err) {
     console.error('Could not remove job:\n', err);
   }
@@ -42,10 +43,9 @@ module.exports = function (app) {
 
     const bookData = getBookData(job);
     const activity = app.createActivity(bookData);
-    console.info('Sending activity:\n', activity);
+    // console.info('Sending activity:\n', activity);
     app.sendActivity(job.recipient, activity, (response) => {
-      console.info('app.sendActivity response:\n', response);
-      console.log('job to delete', job);
+      // console.info('app.sendActivity response:\n', response);
       deleteJob(app, job);
     }, (error) => {
       console.error('app.sendActivity error:\n', error);
@@ -66,10 +66,10 @@ module.exports = function (app) {
           }
         }
       } else {
-        const update = app.db.prepare('UPDATE send_queue SET attempts = ?, next_attempt = ? WHERE rowid = ?');
+        const update = app.db.prepare('UPDATE send_queue SET attempts = ?, next_attempt = ? WHERE recipient = ? AND data = ?');
         const inXMinutes = nowInSeconds + (settings.resendMinutesDelay * 60);
         try {
-          const info = update.run(job.attempts + 1, inXMinutes, job.rowid);
+          const info = update.run(job.attempts + 1, inXMinutes, job.recipient, job.data);
           console.info(`Will re-attempt send to ${job.recipient} in ${settings.resendMinutesDelay} minutes`);
         } catch (err) {
           console.log('Could not update job for later attempt:\n', err);
