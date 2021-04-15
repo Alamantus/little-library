@@ -15,6 +15,17 @@ module.exports = function (app) {
       directives,
     },
   }));
+
+  // Opt out of Google Chrome tracking everything you do.
+  // Note: if you’re reading this, stop using Google Chrome.
+  // It is ridiculous for web servers to essentially have to ask
+  // “please do not violate the privacy of the people who are viewing
+  // this site” with every request.
+  // For more info, see: https://plausible.io/blog/google-floc
+  app.server.use((request, response, next) => {
+    response.set('Permissions-Policy', 'interest-cohort=()');
+    next();
+  });
   
   app.server.use(cookieParser());
 
